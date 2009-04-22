@@ -63,18 +63,46 @@ End Type
     End Constructor
 
 
-
-ReDim players(0) As Player
-Dim numPlayers As Integer = 0
+Dim Shared maxPlayers As Integer = 32
+ReDim Shared players(maxPlayer) As Player
+Dim Shared numPlayers As Integer = 0
 Dim As String temp, temp2, tempst
 Dim As String msg = "", traffic_in = "", traffic_out = "", k = "" 'k = key
 Dim As Double pingTime
 Dim As UByte char, testbyte
 Dim As Integer i,j, count
 
-#Ifndef SEP
-	#Define SEP Chr(1)
-#EndIf
+#Include "crt/string.bi"
+#Include "chisock/chisock.bi"
+Using chi
+
+Dim As socket sock
+
+Randomize Timer
+
+Dim As String serveraddress
+Dim As Integer port = 11002
+Var f = FreeFile
+Open "server.ini" For Input As #f
+	Line Input #f, serveraddress
+	Input #f, port
+Close #f
+If serveraddress = "" Or port = 0 Then Print "Could not find server.ini or it is broken!" :Sleep:End
+
+Print "Connecting to server..."
+
+Var res = sock.client( serveraddress, port )
+If( res ) Then
+	Print translate_error(res)
+	Sleep
+	End
+EndIf
+
+Sleep 200
+
+sock.put(1)
+sock.put(Chr(protocol.introduce) & Str(Rand(63, 75)))
+
 
     Dim gameTimer As FrameTimer
     Dim trafficTimer As DelayTimer = DelayTimer(0.05)
@@ -82,17 +110,10 @@ Dim As Integer i,j, count
     Dim keyTimer As DelayTimer = DelayTimer(0.5)
 
 	Dim Shared As Byte moveStyle = 0, hasMoved = 0, hasMovedOnline = 0
-	Dim Shared As UByte serverQueries = 0, 
-	Dim Shared As Byte consoleOpen = 0, auto_slow = 0
+	Dim Shared As Byte consoleOpen = 0
 	Dim As UByte tempid, tempx, tempy, move_dir
 	Dim As Byte helpscreen = 0
 
-	LoadBookmarks()
-
-	#Ifdef NETWORK_enabled
-		sock.put(1)
-		sock.put(Chr(protocol.changeArea + game.viewLevel) & my_name & SEP & Str(CInt(pl.x)) & SEP & Str(CInt(pl.y)) & SEP & game.getAreaID)
-	#EndIf
 
 
     ' ------- MAIN LOOP ------- '
@@ -103,12 +124,12 @@ Dim As Integer i,j, count
         Cls
         
         'If consoleOpen = 0 Then Keys pl, tileBuf
-        If moveTimer.hasExpired Then
+        If moveTimer.hasExpired And Not consoleOpen Then
 			If MultiKey(KEY_UP)    Then move_dir = 1
 	        If MultiKey(KEY_DOWN)  Then move_dir = 3
 	        If MultiKey(KEY_LEFT)  Then move_dir = 4
 	        If MultiKey(KEY_RIGHT) Then move_dir = 2
-			If MultiKey(KEY_SPACE) Then action = TRUE
+			If MultiKey(KEY_SPACEBAR) Then action = TRUE
 		EndIf
 		
 		'' Draw Map
@@ -134,7 +155,7 @@ Dim As Integer i,j, count
 					Case protocol.message
 						AddMsg(Mid(traffic_in,2))
 					Case protocol.updatePos
-						tempid = Mid(traffic_in,2,1)
+						tempid = Asc(Mid(traffic_in,2,1))
 						For i = 1 To numPlayers
 							If players(i).id = tempid Then
 								players(i).x = Mid(traffic_in,3,1)
@@ -142,13 +163,13 @@ Dim As Integer i,j, count
 							EndIf
 						Next i
 					Case protocol.updateStatus
-						tempid = Mid(traffic_in,2,1)
+						tempid = Asc(Mid(traffic_in,2,1))
 						For i = 1 To numPlayers
 							If players(i).id = tempid Then
 								players(i) = players(numPlayers)
 								players(numPlayers).id = ""
 								numPlayers-=1
-								If log_enabled Then AddLog(my_name & "Player " & temp & " erased.")
+								'If log_enabled Then AddLog(my_name & "Player " & temp & " erased.")
 								Exit For
 							EndIf
 						Next i
@@ -167,7 +188,7 @@ Dim As Integer i,j, count
 					hasMoved = 0
 					trafficTimer.start
 				ElseIf msg <> "" And consoleOpen = 0 Then
-					traffic_out = Chr(protocol.message) & pl.name & ": " & msg
+					traffic_out = Chr(protocol.message) & players(1).name & ": " & msg
 					'AddMsg("OUT:"&traffic_out)
 					sock.put(1)
 					sock.put(traffic_out)
@@ -198,6 +219,7 @@ Dim As Integer i,j, count
  		
         k = InKey
 		If k = Chr(255,68) Then SavePNG("shots/shot"+Str(Int(Rnd*9000)+1000)+".png")': Sleep 1000
+		If k = "t" Or k = "T" Then consoleOpen = TRUE
         If consoleOpen Then
         	msg = GameInput("> ", viewStartX, scrH-16, msg, k)
         	#Ifdef CLIPBOARD_enabled
@@ -205,14 +227,10 @@ Dim As Integer i,j, count
         		If MultiKey(KEY_CONTROL) And MultiKey(KEY_C) Then setClip(msg):Sleep 500
         	#EndIf
         	If MultiKey(KEY_ENTER) Then
-        		consoleOpen = 0
-        		If msg = "/ping" Then serverQueries += queries.ping : msg = ""
-        		If msg = "/info" Or msg = "/who" Or msg = "/count" Then serverQueries += queries.playerCount : msg = ""
-        		If Left(msg,6) = "/goto " Then GoToCoords(Mid(msg,7),pl,tileBuf): msg = ""
+        		consoleOpen = FALSE
+        		'If msg = "/ping" Then serverQueries += queries.ping : msg = ""
+        		'If msg = "/info" Or msg = "/who" Or msg = "/count" Then serverQueries += queries.playerCount : msg = ""
         	EndIf
-        Else
-        	If helpscreen = 1 And k <> "" Then helpscreen = 0
-        	If k = Chr(255,59) Then helpscreen = 1
         EndIf
         switch(workpage)
         Sleep 2,1 'this hack reduces cpu usage in some cases
@@ -227,6 +245,14 @@ Dim As Integer i,j, count
 '''   END OF MAIN LOOP   '''
 '''                      '''
 ''''''''''''''''''''''''''''
+
+Sub AddPlayer(plrow As String)
+	id = Asc(Mid(plrow,1,1))
+	players(id).id		= id
+	players(id).x		= Asc(Mid(plrow,2,1))
+	players(id).x		= Asc(Mid(plrow,3,1))
+	players(id).name	= Mid(plrow,4)
+End Sub
 
 
 Const maxMsg = 10
@@ -301,4 +327,3 @@ Function GetTime() As ULongInt
 	Return gametime
 End Function
 
-#Include "world.bas"
