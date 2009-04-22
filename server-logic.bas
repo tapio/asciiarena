@@ -38,6 +38,7 @@ Type Game
 	id As UByte
 	players(maxPlayers) As CLIENT_NODE Ptr
 	map(1 To mapWidth,1 To mapHeight) As UByte
+	lock_pl As Any Ptr
 	'nextGame As GameFwd Ptr
 	Declare Constructor (title As String = "")
 	Declare Function AddPlayer(cli As CLIENT_NODE Ptr) As UByte
@@ -46,6 +47,7 @@ Type Game
 End Type
 	Constructor Game(title As String = "")
 		this.title = title
+		lock_pl = MutexCreate()
 	End Constructor
 	Sub Game.sendToAll(msg As String)
 		For i As Integer = 1 to maxPlayers
@@ -78,6 +80,7 @@ Dim Shared games(1 To numGames) As Game
 
 
 Sub DeletePlayer(pl As CLIENT_NODE Ptr)
+	If pl->gameid <> 0 Then games(pl->gameid).removePlayer(pl->id)
 	'RemoveFromArea(pl, pl->actArea)
 	'MutexLock(lock_players)
 	'If pl = firstCli Then firstCli = pl->nextPl

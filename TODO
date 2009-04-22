@@ -1,0 +1,32 @@
+AsciiArena TODO
+---------------
+LAST UPDATE: 2009-04-23
+
+[ ] Map
+	[X] Client can display map
+	[ ] Server streams map data
+	[ ] Client interprets
+	[ ] Server loads from file
+
+[ ] Moving
+	[X] Players can move
+	[X] Others can see movement
+	[ ] Collisions with map
+	[ ] Collisions with other players
+
+[ ] Selecting and joining a game
+	[ ] Server sends available games
+	[ ] Client displays them and allows for choice
+	[X] Actual joining
+	[ ] Error handling (e.g. full)
+
+[ ] Fighting
+	[ ] Client sends command
+	[ ] Client knows how to display
+	[ ] Server particle system
+	[ ] Server collision detection and result
+
+[ ] Match
+	[ ] Frags
+	[ ] Game types
+
