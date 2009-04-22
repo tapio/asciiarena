@@ -38,10 +38,7 @@ Declare Sub TimeManager()
 Declare Function GetTime() As ULongInt
 Dim Shared As ULongInt gametime = 0
 
-Const mapWidth = 128
-Const mapHeight = 128
 Dim map(1 To mapWidth,1 To mapHeight) As UByte
-
 
 'Dim Shared As UByte farStarBG(1024, 1024)
 'GenerateDistantStarBG(farStarBG()) 

@@ -10,20 +10,20 @@ WindowTitle "AsciiArena Server"
 #Include Once "chisock/chisock.bi"
 #Include Once "def.bi"
 #Include Once "words.bi"
-
 Using chi
+#Include Once "protocol.bi"
+#Include Once "server-logic.bas"
+
+
 
 Declare Sub ServerOutput(_st As String)
-
-#Include "protocol.bi"
-#Include "server-logic.bas"
-
 Declare Sub ServerThread( curCli As CLIENT_NODE Ptr)
 
 
 Sub accept_thread( Byval s As socket Ptr )
 	Var new_cnx = New socket
 	Var new_cli = New CLIENT_NODE
+	Dim As Integer h = 0
 	Do
 		new_cnx->listen_to_new( *s )
 		If ( s->is_closed Or serverShutdown ) Then 
@@ -31,7 +31,8 @@ Sub accept_thread( Byval s As socket Ptr )
 		EndIf
 		If ( new_cnx->is_closed = FALSE ) Then 
 			MutexLock(lock_players)
-				'If( new_cnx->get( new_cli->name, 1, socket.BLOCK ) ) Then 
+			If new_cnx->get( h ) Then
+				If new_cnx->get( new_cli->name, 1, socket.BLOCK ) Then 
 					new_cli->cnx = new_cnx
 					ServerOutput "New Connection: " & Str(*(new_cli->cnx->connection_info()))
 					clients += 1
@@ -40,7 +41,8 @@ Sub accept_thread( Byval s As socket Ptr )
 					lastCli = new_cli
 					lastCli->cnx->put(Chr(protocol.message) & "Connection to server established")
 					lastCli->thread = ThreadCreate( Cast(Sub(ByVal As Any Ptr), @ServerThread), lastCli )
-				'EndIf
+				EndIf
+			EndIf
 			MutexUnLock(lock_players)
 			new_cnx = New socket
 			new_cli = New CLIENT_NODE
@@ -53,19 +55,18 @@ End Sub
 
 StartTimer = Timer
 StartTime = Date & " " & Time
-ServerOutput "#### Starting server on " & StartTime
-LoadModifications
-regCount = CountRegPlayers()
+ServerOutput "#### Starting aa-server on " & StartTime
 Dim Shared As Integer port = 11000
 Dim As socket sock, httpsock
 Var res = sock.server( port )
-If( res ) Then
-	Print translate_error( res )
-EndIf
+If( res ) Then Print translate_error( res )
 
-'Var http_t = ThreadCreate( Cast(Sub(ByVal As Any Ptr), @http_thread), @httpsock )
 Var t = ThreadCreate( Cast(Sub(ByVal As Any Ptr), @accept_thread), @sock )
 ServerOutput "Listening on port " & port
+
+
+ServerOutput "Created one game"
+
 
 Dim As Double temptime = Timer
 '***********'
@@ -87,7 +88,6 @@ ServerOutput "Shutting down server..."
 'MutexUnLock(lock_players)
 Sleep 2500, 1
 sock.close( )
-httpsock.close( )
 'MutexLock(lock_players)
 '	Do While plNode <> 0
 '		ThreadWait(plNode->thread)  ' tästä tulis luultavasti null pointereita...
@@ -107,55 +107,28 @@ Sub ServerThread( curCli As CLIENT_NODE Ptr )
 		'process incoming data
 		If( curCli->cnx->get( h ) ) Then 
 		If( curCli->cnx->get( msg , 1, socket.block ) ) Then
-		If curCli->name <> "" Then
+		If curCli->gameId <> 0 Then
 			Select Case (Asc(Left(msg,1)) And actionMask)
-				Case protocol.introduce
-				
 				Case protocol.message
+					games(curCli->gameId).sendToAll(Mid(msg,2))
 					ServerOutput("MSG>"&Mid(msg,2))
-					SendToAllInArea(curCli->actArea, msg)
 				Case protocol.updatePos
-					SendToAllInArea(curCli->actArea, msg, curCli->name)
-					MutexLock(lock_players)
-					curCli->x = CInt( GetWord(msg,2,SEP) )
-					curCli->y = CInt( GetWord(msg,3,SEP) )
-					MutexUnLock(lock_players)
-				End Select
+					
+					Select Case Asc(Mid(msg,2))
+						Case 1
+					End Select
 			End Select
 			
-			' Login stuff
+			' Starting stuff
 			Else
-				Dim As Byte flag
-				tempst = Mid(msg,2)
-				Select Case (Asc(Left(msg,1)) And &b11110000)
-					Case protocol.login
-						flag = LoadPlayer(GetWord(tempst,1,SEP),GetWord(tempst,2,SEP),curCli)
-						If flag = 1 Then curCli->cnx->Put(Chr(protocol.login+success) & "Login succesful") Else curCli->cnx->Put(Chr(protocol.login) & "Bad name or password")
-					Case protocol.register
-						If isValidName(GetWord(tempst,1,SEP)) = 0 Then
-							curCli->cnx->Put(Chr(protocol.register) & "Invalid name")
-						Else
-							flag = LoadPlayer(GetWord(tempst,1,SEP),GetWord(tempst,2,SEP),curCli)
-							If flag = 0 Then
-								SavePlayer(GetWord(tempst,1,SEP),GetWord(tempst,2,SEP))
-								curCli->name = GetWord(tempst,1,SEP)
-								curCli->cnx->Put(Chr(protocol.register+success) & "Registeration complete")
-								regCount+=1
-							Else
-								curCli->cnx->Put(Chr(protocol.register) & "Name already in use")
-							EndIf
-						EndIf
-					Case protocol.serverQuery
-						If (Asc(Left(msg,1)) And queries.ping)        <> 0 Then curCli->cnx->Put(Chr(protocol.serverQuery + queries.ping))
-						If (Asc(Left(msg,1)) And queries.playerCount) <> 0 Then curCli->cnx->Put(Chr(protocol.message + queries.playerCount) & "Players Online: " & Str(clients))
-				End Select
-				If curCli->name <> "" Then ServerOutput "Connection " & Str(*(curCli->cnx->connection_info())) & " identified as " & curCli->name
+
+				'If curCli->name <> "" Then ServerOutput "Connection " & Str(*(curCli->cnx->connection_info())) & " identified as " & curCli->name
 			EndIf
 		EndIf
 		EndIf
 		Sleep 5,1
 	Loop
-	If curCli->name <> "" Then SendToAllInArea(curCli->actArea, Chr(protocol.changeArea) & curCli->name, curCli->name) Else curCli->Name = Str(*(curCli->cnx->connection_info()))
+	If curCli->gameId <> 0 Then games(curCli->gameId).sendToAll(Chr(protocol.updateStatus, curCli->id))
 	If serverShutdown <> 0 And (Not curCli->cnx->is_closed()) Then curCli->cnx->put(Chr(protocol.message) & "SERVER: Server is shutting down...")
 	curCli->cnx->close()
 	ServerOutput "Connection to " & curCli->name & " terminated"
