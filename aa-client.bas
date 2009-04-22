@@ -76,7 +76,7 @@ Dim As String temp, temp2, tempst
 Dim As String msg = "", traffic_in = "", traffic_out = "", k = "" 'k = key
 Dim As Double pingTime
 Dim As UByte char, testbyte
-Dim As Integer i,j, tempx,tempy, tempz, count
+Dim As Integer i,j, count
 
 #Ifndef SEP
 	#Define SEP Chr(1)
@@ -102,7 +102,7 @@ Dim As Integer i,j, tempx,tempy, tempz, count
 	Dim Shared As Byte moveStyle = 0, hasMoved = 0, hasMovedOnline = 0
 	Dim Shared As UByte serverQueries = 0, gotoBookmarkSlot = 0
 	Dim Shared As Byte consoleOpen = 0, auto_slow = 0
-	Dim Shared As String bookmarks(1 To 9)
+	Dim As UByte tempid, tempx, tempy
 	Dim As Byte helpscreen = 0
 
 	LoadBookmarks()
@@ -120,136 +120,84 @@ Dim As Integer i,j, tempx,tempy, tempz, count
         ScreenSet workpage, workpage Xor 1
         Cls
         
-        If helpscreen = 0 Then
         If consoleOpen = 0 Then Keys pl, tileBuf
-        If gotoBookmarkSlot <> 0 Then tempz = GoToCoords(bookmarks(gotoBookmarkSlot),pl,tileBuf): gotoBookmarkSlot = 0
         
-        UpdateCache tileBuf, CInt(pl.x),CInt(pl.y), viewX,viewY
-        DrawView tileBuf, CInt(pl.x),CInt(pl.y), viewStartX,viewStartY, viewX,viewY
-        Draw String ( viewStartX + 8*viewX, viewStartY + 8*viewY ), pl.curIcon, RGB(150,250,150)
-        Draw String ( viewStartX + 8*(viewX+CInt(Cos(pl.ang*DegToRad)*10)), viewStartY + 8*(viewY-CInt(Sin(pl.ang*DegToRad)*10)) ), "x", RGB(0,255,0)
-        If pl.upX > 0 AndAlso Abs(pl.upX-pl.x) < viewX AndAlso Abs(pl.upY-pl.y) < viewY Then Draw String ( viewStartX + 8*(viewX + (pl.upX-CInt(pl.x))), viewStartY + 8*(viewY + (pl.upY-CInt(pl.y))) ), "X", RGB(200,0,200)
-		If game.viewLevel = zSystem Then
-			For i = 0 To game.curSystem.starCount + game.curSystem.planetCount - 1
-				Dim As Integer xdiff = game.curSystem.objects(i).x - pl.x
-				Dim As Integer ydiff = game.curSystem.objects(i).y - pl.y
-				If Abs(xdiff) > viewX Or Abs(ydiff) > viewY Then
-					If Abs(xdiff) > Abs(ydiff) Then
-						If xdiff < 0 Then xdiff = -viewX: char = 17 Else xdiff = viewX: char = 16
-					Else
-						If ydiff < 0 Then ydiff = -viewY: char = 30 Else ydiff = viewY: char = 31
-					EndIf
-					xdiff = Clip(xdiff,-viewX,viewX)
-					ydiff = Clip(ydiff,-viewY,viewY)
-					Draw String ( viewStartX + 8*(viewX+xdiff), viewStartY + 8*(viewY+ydiff) ), Chr(char), game.curSystem.objects(i).col
-				EndIf
+		'' Draw Map
+        For j = 1 To mapHeight
+			For i = 1 to mapWidth
+				If map(i,j) <> 0 Then Draw String ( viewStartX+8*i, viewStartY+8*j ), Chr(map(i,j)), RGB(100,100,100)
 			Next i
-		EndIf
+		Next j
 
-
+		'' Draw Players
 		For i = 1 To numPlayers
-			Draw String ( viewStartX + 8*(viewX + (CInt(players(i).x)-CInt(pl.x))), viewStartY + 8*(viewY + (CInt(players(i).y)-CInt(pl.y))) ), Chr(234), RGB(100,100,100)
+			If players(i).id <> 0 Then _
+				Draw String ( viewStartX + 8*players(i).x, viewStartY + 8*players(i).y ), Chr(234), RGB(100,100,100)
 		Next i
-	
-	If sock.is_closed = FALSE Then
-		'process incoming
-		If sock.get(traffic_in) Then
-			Select Case Asc(Left(traffic_in,1))
-				Case protocol.introduce
-
-				Case protocol.message
-					AddMsg(Mid(traffic_in,2))
-				Case protocol.updatePos
-					temp = GetWord(Mid(traffic_in,2),1,SEP)
-					For i = 1 To numPlayers
-						If players(i).id = temp Then
-							players(i).x = CInt( GetWord(traffic_in,2,SEP) )
-							players(i).y = CInt( GetWord(traffic_in,3,SEP) )
-							i = -1 : Exit For
-						EndIf
-					Next i
-					If i <> -1 Then
-						numPlayers+=1
-						ReDim Preserve players(1 To numPlayers) As Player
-						players(numPlayers).id = temp
-						players(numPlayers).x  = CInt( GetWord(traffic_in,2,SEP) )
-						players(numPlayers).y  = CInt( GetWord(traffic_in,3,SEP) )
-						If log_enabled Then AddLog(my_name & "Player " & temp & " added.")
-					EndIf
-				Case protocol.changeArea
-					temp = Mid(traffic_in,2)
-					For i = 1 To numPlayers
-						If players(i).id = temp Then
-							players(i) = players(numPlayers)
-							players(numPlayers).id = ""
-							numPlayers-=1
-							If log_enabled Then AddLog(my_name & "Player " & temp & " erased.")
-							Exit For
-						EndIf
-					Next i
-				Case protocol.modifyArea
-					temp = Mid(traffic_in,2)
-					count = CInt( GetWord(temp,1,SEP) )
-					temp = Mid(traffic_in,InStr(traffic_in,SEP)+1)
-					j = 0
-					'Dim tempTex As AsciiTexture
-					For i = 1 To count
-						tempx = Asc(Mid(temp,j+1,1)) - detCoordOffSet
-						tempy = Asc(Mid(temp,j+2,1)) - detCoordOffSet
-						tempz = Asc(Mid(temp,j+3,1))
-						AddLog("xyz" & tempx & " " & tempy & " " & tempz)
-						'tempTex = ASCIITexture(Asc(Mid(temp,j+3,1)), Asc(Mid(temp,j+4,1)), Asc(Mid(temp,j+5,1)), Asc(Mid(temp,j+6,1)) )
-						game.curArea.Modify( tempx,tempy, ASCIITile(buildings(tempz).tex,0,buildings(tempz).flags) )
-						j+=3
-					Next i		
-					tileBuf.isEmpty = -1
-				Case protocol.areaStatus
-					temp = Mid(traffic_in,2)
-					numPlayers = CInt( GetWord(temp,1,SEP) )
-					ReDim players(1 To numPlayers) As Player
-					j = 2
-					For i = 1 To numPlayers
-						players(i).id = GetWord(temp,j,SEP)
-						players(i).x  = CInt( GetWord(temp,j+1,SEP) )
-						players(i).y  = CInt( GetWord(temp,j+2,SEP) )
-						j+=3
-						If log_enabled Then AddLog(my_name & "Player " & players(i).id & " added.")
-					Next i
-			End Select
-	
-		End If
 		
-		'send out
-		If trafficTimer.hasExpired Then
-			ElseIf hasMovedOnline Then
-				traffic_out = Chr(protocol.updatePos, pl.id, pl.x, pl.y)
-				'AddMsg("OUT:"&traffic_out)
-				sock.put(1)
-				sock.put(traffic_out)
-				traffic_out = ""
-				hasMovedOnline = 0
-				trafficTimer.start
-			ElseIf msg <> "" And consoleOpen = 0 Then
-				traffic_out = Chr(protocol.message) & my_name & ": " & msg
-				'AddMsg("OUT:"&traffic_out)
-				sock.put(1)
-				sock.put(traffic_out)
-				'pingTime = Timer
-				traffic_out = ""
-				msg = ""
-				trafficTimer.start
+		'' Networking
+		If sock.is_closed = FALSE Then
+			'' Process incoming
+			If sock.get(traffic_in) Then
+				Select Case Asc(Left(traffic_in,1))
+					Case protocol.introduce
+						AddPlayer(Mid(traffic_in,2))
+					Case protocol.message
+						AddMsg(Mid(traffic_in,2))
+					Case protocol.updatePos
+						tempid = Mid(traffic_in,2,1)
+						For i = 1 To numPlayers
+							If players(i).id = tempid Then
+								players(i).x = Mid(traffic_in,3,1)
+								players(i).y = Mid(traffic_in,4,1)
+							EndIf
+						Next i
+					Case protocol.updateStatus
+						tempid = Mid(traffic_in,2,1)
+						For i = 1 To numPlayers
+							If players(i).id = tempid Then
+								players(i) = players(numPlayers)
+								players(numPlayers).id = ""
+								numPlayers-=1
+								If log_enabled Then AddLog(my_name & "Player " & temp & " erased.")
+								Exit For
+							EndIf
+						Next i
+				End Select
+		
+			End If
+			
+			'' Send out
+			If trafficTimer.hasExpired Then
+				ElseIf hasMovedOnline Then
+					traffic_out = Chr(protocol.updatePos, pl.id, pl.x, pl.y)
+					'AddMsg("OUT:"&traffic_out)
+					sock.put(1)
+					sock.put(traffic_out)
+					traffic_out = ""
+					hasMovedOnline = 0
+					trafficTimer.start
+				ElseIf msg <> "" And consoleOpen = 0 Then
+					traffic_out = Chr(protocol.message) & pl.name & ": " & msg
+					'AddMsg("OUT:"&traffic_out)
+					sock.put(1)
+					sock.put(traffic_out)
+					'pingTime = Timer
+					traffic_out = ""
+					msg = ""
+					trafficTimer.start
+				EndIf
 			EndIf
+		Else
+			Cls
+			temp = "Connection to server lost!"
+			Draw String ( (scrW - Len(temp)*8)*.5, (scrH-8)*.5 ), temp, RGB(255,0,0)
+			switch(workpage)
+			ScreenSet workpage, workpage Xor 1
+			Sleep 1500,1
+			Sleep
+			End 
 		EndIf
-	Else
-		Cls
-		temp = "Connection to server lost!"
-		Draw String ( (scrW - Len(temp)*8)*.5, (scrH-8)*.5 ), temp, RGB(255,0,0)
-		switch(workpage)
-		ScreenSet workpage, workpage Xor 1
-		Sleep 1500,1
-		Sleep
-		End 
-	EndIf
 
 
         Locate 1,1: Color RGB(80,40,40)
