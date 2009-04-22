@@ -41,7 +41,7 @@ Type Game
 	map(1 To mapWidth,1 To mapHeight) As UByte
 	'nextGame As GameFwd Ptr
 	Declare Constructor (name As String = "")
-	Declare Function AddPlayer(cli As CLIENT_NODE Ptr) As Integer
+	Declare Function AddPlayer(cli As CLIENT_NODE Ptr) As UByte
 	Declare Sub removePlayer(id As UByte)
 	Declare Sub sendToAll(msg As String)
 End Type
@@ -53,11 +53,11 @@ End Type
 			If this.players(i)->name <> "" Then this.players(i)->send(msg)
 		Next i
 	End Sub
-	Function Game.AddPlayer(cli As CLIENT_NODE Ptr) As Integer
+	Function Game.AddPlayer(cli As CLIENT_NODE Ptr) As UByte
 		For i As Integer = 1 To maxPlayers
-			If this.players(i) = 0 Then this.players(i) = cli: Return TRUE
+			If this.players(i) = 0 Then this.players(i) = cli: cli->id = i: Return i
 		Next i
-		Return FALSE
+		Return 0
 	End Function
 	Sub Game.removePlayer(id As UByte)
 		this.players(id)->id = 0

@@ -31,7 +31,7 @@ Sub accept_thread( Byval s As socket Ptr )
 		EndIf
 		If ( new_cnx->is_closed = FALSE ) Then 
 			MutexLock(lock_players)
-			If new_cnx->get( h ) Then
+			'If new_cnx->get( h ) Then
 				If new_cnx->get( new_cli->name, 1, socket.BLOCK ) Then 
 					new_cli->cnx = new_cnx
 					ServerOutput "New Connection: " & Str(*(new_cli->cnx->connection_info()))
@@ -42,7 +42,7 @@ Sub accept_thread( Byval s As socket Ptr )
 					lastCli->cnx->put(Chr(protocol.message) & "Connection to server established")
 					lastCli->thread = ThreadCreate( Cast(Sub(ByVal As Any Ptr), @ServerThread), lastCli )
 				EndIf
-			EndIf
+			'EndIf
 			MutexUnLock(lock_players)
 			new_cnx = New socket
 			new_cli = New CLIENT_NODE
@@ -56,7 +56,7 @@ End Sub
 StartTimer = Timer
 StartTime = Date & " " & Time
 ServerOutput "#### Starting aa-server on " & StartTime
-Dim Shared As Integer port = 11000
+Dim Shared As Integer port = 11002
 Dim As socket sock, httpsock
 Var res = sock.server( port )
 If( res ) Then Print translate_error( res )
@@ -126,11 +126,15 @@ Sub ServerThread( curCli As CLIENT_NODE Ptr )
 					games(curCli->gameId).sendToAll(Chr(protocol.updatePos, curCli->id, curCli->x, curCli->y))
 			End Select
 			
-			' Starting stuff
-			Else
+		' Starting stuff
+		Else
+			
+			
+			curCli->id = games(1).addPlayer(curCli)
+			curCli->send(Chr(protocol.introduce, curCli->x, curCli->y) & curCli->name)
 
-				'If curCli->name <> "" Then ServerOutput "Connection " & Str(*(curCli->cnx->connection_info())) & " identified as " & curCli->name
-			EndIf
+			'If curCli->name <> "" Then ServerOutput "Connection " & Str(*(curCli->cnx->connection_info())) & " identified as " & curCli->name
+		EndIf
 		EndIf
 		EndIf
 		Sleep 5,1

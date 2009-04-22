@@ -66,8 +66,9 @@ ReDim Shared players(maxPlayers) As Player
 Dim Shared numPlayers As Integer = 0
 Dim As String temp, temp2, tempst
 Dim As String msg = "", traffic_in = "", traffic_out = "", k = "" 'k = key
-Dim As Double pingTime
+Dim As String my_name
 Dim As UByte my_id, char, testbyte
+Dim As Double pingTime
 Dim As Integer i,j, count
 
 #Include "crt/string.bi"
@@ -87,7 +88,7 @@ Open "server.ini" For Input As #f
 Close #f
 If serveraddress = "" Or port = 0 Then Print "Could not find server.ini or it is broken!" :Sleep:End
 
-Print "Connecting to server..."
+Print "Connecting to " & serveraddress & ":" & Str(port)
 
 Var res = sock.client( serveraddress, port )
 If( res ) Then
@@ -97,9 +98,23 @@ If( res ) Then
 EndIf
 
 Sleep 200
+my_name =  Str(Rand(63, 75)) +  Str(Rand(63, 75))
 
-sock.put(1)
-sock.put(Chr(protocol.introduce) & Str(Rand(63, 75)))
+'sock.put(1)
+sock.put(Chr(protocol.introduce) & my_name)
+
+Do
+	sock.get(traffic_in)
+	If Asc(Left(traffic_in,1)) = protocol.introduce And Mid(traffic_in,5) = my_name Then
+		my_id = Asc(Mid(traffic_in,2,1))
+		AddPlayer(Mid(traffic_in,2))
+		Exit Do
+	EndIf
+	k = InKey
+	If k = Chr(27) Or k = Chr(255) & "k" Then End
+	Sleep 10
+Loop
+
 
 
     Dim gameTimer As FrameTimer
@@ -237,7 +252,7 @@ Sub AddPlayer(plrow As String)
 	Var id = Asc(Mid(plrow,1,1))
 	players(id).id		= id
 	players(id).x		= Asc(Mid(plrow,2,1))
-	players(id).x		= Asc(Mid(plrow,3,1))
+	players(id).y		= Asc(Mid(plrow,3,1))
 	players(id).name	= Mid(plrow,4)
 End Sub
 
