@@ -85,9 +85,9 @@ Sub DeletePlayer(pl As CLIENT_NODE Ptr)
 End Sub
 
 
-Sub CreateGame(name As String, map As String)
+Sub CreateGame(title As String, map As String)
 	numGames += 1
-	games(numGames) = Game(name)
+	games(numGames) = Game(title)
 	For j As Integer = 1 To mapHeight
 		For i As Integer = 1 To mapWidth
 			If rnd > .8 Then games(numGames).map(i,j) = Asc("#")

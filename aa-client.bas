@@ -67,7 +67,7 @@ Dim Shared numPlayers As Integer = 0
 Dim As String temp, temp2, tempst
 Dim As String msg = "", traffic_in = "", traffic_out = "", k = "" 'k = key
 Dim As Double pingTime
-Dim As UByte char, testbyte
+Dim As UByte my_id, char, testbyte
 Dim As Integer i,j, count
 
 #Include "crt/string.bi"
@@ -175,7 +175,7 @@ sock.put(Chr(protocol.introduce) & Str(Rand(63, 75)))
 					hasMoved = 0
 					trafficTimer.start
 				ElseIf msg <> "" And consoleOpen = 0 Then
-					traffic_out = Chr(protocol.message) & players(1).name & ": " & msg
+					traffic_out = Chr(protocol.message) & players(my_id).name & ": " & msg
 					'AddMsg("OUT:"&traffic_out)
 					sock.put(1)
 					sock.put(traffic_out)

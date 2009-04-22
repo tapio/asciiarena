@@ -113,10 +113,17 @@ Sub ServerThread( curCli As CLIENT_NODE Ptr )
 					games(curCli->gameId).sendToAll(Mid(msg,2))
 					ServerOutput("MSG>"&Mid(msg,2))
 				Case protocol.updatePos
-					
 					Select Case Asc(Mid(msg,2))
 						Case 1
+							curCli->y -= 1
+						Case 2
+							curCli->x += 1
+						Case 3
+							curCli->y += 1
+						Case 4
+							curCli->x -= 1
 					End Select
+					games(curCli->gameId).sendToAll(Chr(protocol.updatePos, curCli->id, curCli->x, curCli->y))
 			End Select
 			
 			' Starting stuff
