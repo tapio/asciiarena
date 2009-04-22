@@ -26,26 +26,21 @@ Const viewStartY = 7 * 8
 Const log_enabled = -1
 
 Declare Function GameInput(promt As String = "", x As Integer, y As Integer, stri As String, k As String = "") As String
-'Declare Function GoToCoords(stamp As String, ByRef pl As SpaceShip, ByRef tileBuf As TileCache) As Byte
-Declare Sub GenerateTextures(seed As Double = -1)
-Declare Sub GenerateDistantStarBG(array() As UByte)
-Declare Sub AddVariance(ByRef tile As ASCIITile, variance As Short)
-Declare Function AddVarianceToColor(col As UInteger, variance As Short) As UInteger
 Declare Sub AddMsg(_msg As String)
 Declare Sub PrintMessages(x As Integer, y As Integer, _count As Integer = 1)
 Declare Sub DrawASCIIFrame(x1 As Integer, y1 As Integer, x2 As Integer, y2 As Integer, col As UInteger = 0, Title As String = "")
-Declare Sub SaveBookmarks(filename As String = "bookmarks.ini")
-Declare Sub LoadBookmarks(filename As String = "bookmarks.ini")
+
 
 Const TimeSyncInterval = 5.000
 Declare Sub TimeManager()
 Declare Function GetTime() As ULongInt
 Dim Shared As ULongInt gametime = 0
 
+Const mapWidth = 128
+Const mapHeight = 128
+Dim map(1 To mapWidth,1 To mapHeight) As UByte
 
 #Include Once "protocol.bi"
-#Include Once "universeTypes.bi"
-#Include Once "helps.bas"
 
 'Dim Shared As UByte farStarBG(1024, 1024)
 'GenerateDistantStarBG(farStarBG()) 
@@ -62,12 +57,11 @@ Type Player
     curIcon As String = char_starship
     Declare Constructor(x As UByte = 0, y As UByte = 0)
 End Type
-    Constructor SpaceShip(x As Double = 0, y As Double = 0
+    Constructor Player(x As UByte = 0, y As UByte = 0)
         this.x   = x
         this.y   = y
     End Constructor
 
-Declare Sub Keys(ByRef pl As SpaceShip, ByRef tileBuf As TileCache)
 
 
 ReDim players(0) As Player
@@ -82,27 +76,15 @@ Dim As Integer i,j, count
 	#Define SEP Chr(1)
 #EndIf
 
-	Dim Shared As Integer pendingModifications = 0
-	Dim Shared modQueue(pendingModifications) As String
-	'If log_enabled Then AddLog(my_name & "---NEW---")
-
-    Dim Shared game As GameLogic
-        game.viewLevel = zStarmap
-        game.curGalaxy = Galaxy(42)
-        game.updateBounds
-        game.curStarmap.seed = game.curGalaxy.seed
-        BuildNoiseTables game.curStarmap.seed, 8
-    'Dim pl As SpaceShip = SpaceShip(GALAXYSIZE/2,GALAXYSIZE/2,90)
-    Dim pl As SpaceShip = SpaceShip(game.curStarmap.size/2,game.curStarmap.size/2,90)
-    Dim tileBuf As TileCache = TileCache(pl.x, pl.y, @GetStarmapTile)
-    GoToCoords("4194312,4194292", pl, tileBuf)
     Dim gameTimer As FrameTimer
-
     Dim trafficTimer As DelayTimer = DelayTimer(0.05)
+	Dim moveTimer As DelayTimer = DelayTimer(0.01)
+    Dim keyTimer As DelayTimer = DelayTimer(0.5)
+
 	Dim Shared As Byte moveStyle = 0, hasMoved = 0, hasMovedOnline = 0
-	Dim Shared As UByte serverQueries = 0, gotoBookmarkSlot = 0
+	Dim Shared As UByte serverQueries = 0, 
 	Dim Shared As Byte consoleOpen = 0, auto_slow = 0
-	Dim As UByte tempid, tempx, tempy
+	Dim As UByte tempid, tempx, tempy, move_dir
 	Dim As Byte helpscreen = 0
 
 	LoadBookmarks()
@@ -120,8 +102,15 @@ Dim As Integer i,j, count
         ScreenSet workpage, workpage Xor 1
         Cls
         
-        If consoleOpen = 0 Then Keys pl, tileBuf
-        
+        'If consoleOpen = 0 Then Keys pl, tileBuf
+        If moveTimer.hasExpired Then
+			If MultiKey(KEY_UP)    Then move_dir = 1
+	        If MultiKey(KEY_DOWN)  Then move_dir = 3
+	        If MultiKey(KEY_LEFT)  Then move_dir = 4
+	        If MultiKey(KEY_RIGHT) Then move_dir = 2
+			If MultiKey(KEY_SPACE) Then action = TRUE
+		EndIf
+		
 		'' Draw Map
         For j = 1 To mapHeight
 			For i = 1 to mapWidth
@@ -169,13 +158,13 @@ Dim As Integer i,j, count
 			
 			'' Send out
 			If trafficTimer.hasExpired Then
-				ElseIf hasMovedOnline Then
-					traffic_out = Chr(protocol.updatePos, pl.id, pl.x, pl.y)
+				If move_dir <> 0 Then
+					traffic_out = Chr(protocol.updatePos, move_dir)
 					'AddMsg("OUT:"&traffic_out)
 					sock.put(1)
 					sock.put(traffic_out)
 					traffic_out = ""
-					hasMovedOnline = 0
+					hasMoved = 0
 					trafficTimer.start
 				ElseIf msg <> "" And consoleOpen = 0 Then
 					traffic_out = Chr(protocol.message) & pl.name & ": " & msg
@@ -211,10 +200,10 @@ Dim As Integer i,j, count
 		If k = Chr(255,68) Then SavePNG("shots/shot"+Str(Int(Rnd*9000)+1000)+".png")': Sleep 1000
         If consoleOpen Then
         	msg = GameInput("> ", viewStartX, scrH-16, msg, k)
-        	'#Ifdef CLIPBOARD_enabled
+        	#Ifdef CLIPBOARD_enabled
         		If MultiKey(KEY_CONTROL) And MultiKey(KEY_V) Then msg = msg & getClip():Sleep 500
         		If MultiKey(KEY_CONTROL) And MultiKey(KEY_C) Then setClip(msg):Sleep 500
-        	'#EndIf
+        	#EndIf
         	If MultiKey(KEY_ENTER) Then
         		consoleOpen = 0
         		If msg = "/ping" Then serverQueries += queries.ping : msg = ""
@@ -229,9 +218,7 @@ Dim As Integer i,j, count
         Sleep 2,1 'this hack reduces cpu usage in some cases
     Loop Until k = Chr(27) Or k = Chr(255) & "k"
 
-#Ifdef NETWORK_enabled
     sock.close()
-#EndIf
     End
 
 
@@ -241,137 +228,6 @@ Dim As Integer i,j, count
 '''                      '''
 ''''''''''''''''''''''''''''
 
-
-Sub Keys(ByRef pl As SpaceShip, ByRef tileBuf As TileCache)
-	#Macro dostuff(updown)
-	    game.viewLevel += updown
-	    If updown < 0 Then pl.upX = pl.x : pl.upY = pl.y Else pl.upX = -100 : pl.upY = -100
-	    game.updateBounds
-	    moveStyle = 0
-	    pl.spd = 0
-	    game.viewLevelChanged = -1
-	#EndMacro
-    Static moveTimer As DelayTimer = DelayTimer(0.01)
-    Static keyTimer As DelayTimer = DelayTimer(0.5)
-    hasMoved = 0
-    
-    If MultiKey(KEY_LSHIFT) Then moveTimer.delay = 0 Else moveTimer.delay = .002
-    'If moveStyle = 0 Then moveTimer.delay = .1 Else moveTimer.delay = .002
-    
-    Dim As Integer tempx, tempy
-    
-    If moveTimer.hasExpired Then
-        pl.oldx = pl.x : pl.oldy = pl.y
-        If moveStyle = 0 Then
-        	Dim As UByte tempang = 0
-        	pl.spd = 0
-	        If MultiKey(KEY_UP)    Then tempang+=&b1000: pl.spd = .333
-	        If MultiKey(KEY_DOWN)  Then tempang+=&b0010: pl.spd = .333
-	        If MultiKey(KEY_LEFT)  Then tempang+=&b0001: pl.spd = .333
-	        If MultiKey(KEY_RIGHT) Then tempang+=&b0100: pl.spd = .333
-	        If pl.spd <> 0 Then pl.ang = table_dirAngles(tempang)
-	        If MultiKey(KEY_W) AndAlso game.viewLevel <> zDetail AndAlso game.viewLevel <> zGalaxy Then moveStyle = 1: pl.spd = 1.0
-        Else
-        	'If MultiKey(KEY_SPACE) Then pl.spd = 0
-	        If MultiKey(KEY_W) Then
-	        	pl.spd += .02
-	        Else
-	        	If auto_slow Then pl.spd *= .95
-	        	If pl.spd < .2 Then pl.spd = 0: moveStyle = 0
-	        EndIf
-	        If MultiKey(KEY_S)  Then pl.spd = Max(0,pl.spd-.01)': moveTimer.start
-        EndIf
-        If MultiKey(KEY_A) Then pl.ang = wrap(pl.ang+5,360): moveTimer.start
-        If MultiKey(KEY_D) Then pl.ang = wrap(pl.ang-5,360): moveTimer.start
-		If pl.spd <> 0 Then
-	        pl.x = pl.x + Cos(pl.ang * DegToRad) * pl.spd
-	        pl.y = pl.y - Sin(pl.ang * DegToRad) * pl.spd
-			hasMoved = -1
-			moveTimer.start
-		EndIf
-		'If ( game.viewLevel = zGalaxy ) AndAlso (Not inBounds(pl.x,0,game.boundW(game.viewLevel)-1) OrElse Not inBounds(pl.y,0,game.boundH(game.viewLevel)-1)) Then
-		'	pl.x = pl.oldx: pl.y = pl.oldy
-		If game.viewLevel = zDetail AndAlso (pl.x <> pl.oldx OrElse pl.y <> pl.oldy) Then
-			If (game.curArea.areaArray(CInt(pl.x),CInt(pl.y)).flags And BLOCKS_MOVEMENT) <> 0 Then pl.x = CInt(pl.oldx): pl.y = CInt(pl.oldy): pl.spd = 0
-			If (Not inBounds(pl.x,0,game.boundW(game.viewLevel)-1) OrElse Not inBounds(pl.y,0,game.boundH(game.viewLevel)-1)) Then
-				tempx = game.curArea.x
-				tempy = game.curArea.y
-				Dim As Integer arriveX = CInt(pl.x), arriveY = CInt(pl.y)
-				If pl.x < 0 Then tempx -= 1: arriveX = game.boundW(game.viewLevel)-1
-				If pl.x > game.boundW(game.viewLevel)-1 Then tempx += 1: arriveX = 0
-				If pl.y < 0 Then tempy -= 1: arriveY = game.boundH(game.viewLevel)-1
-				If pl.y > game.boundH(game.viewLevel)-1 Then tempy += 1: arriveY = 0
-			    game.curArea = SurfaceArea(tempx, tempy, tempy * game.curPlanet.w + tempx)
-	            game.updateBounds
-                pl.x = arriveX : pl.y = arriveY
-                tileBuf = TileCache(pl.x, pl.y, @GetAreaTile)
-        		game.viewLevelChanged = -1
-			EndIf
-		ElseIf (Not inBounds(pl.x,0,game.boundW(game.viewLevel)-1)) OrElse (Not inBounds(pl.y,0,game.boundH(game.viewLevel)-1)) Then
-			If game.viewLevel = zSystem Then
-                pl.x = game.curSystem.x
-                pl.y = game.curSystem.y
-                tileBuf = TileCache(pl.x, pl.y, @GetStarmapTile)
-                BuildNoiseTables game.curStarmap.seed, 8
-				dostuff(-1)
-			Else
-				If pl.x < 0 Then pl.x += game.boundW(game.viewLevel)
-				If pl.y < 0 Then pl.y += game.boundH(game.viewLevel)
-				If pl.x > game.boundW(game.viewLevel) Then pl.x -= game.boundW(game.viewLevel)
-				If pl.y > game.boundH(game.viewLevel) Then pl.y -= game.boundH(game.viewLevel)
-				'pl.x = wrap(pl.x, game.boundW(game.viewLevel))
-				'pl.y = wrap(pl.y, game.boundH(game.viewLevel))
-			EndIf
-		EndIf
-    EndIf
-    
-    Dim As Byte controlKey = 0, buildMode = 0
-    If MultiKey(KEY_B) And game.viewLevel = zDetail Then buildMode = -1'Not buildmode '-1
-    If MultiKey(KEY_CONTROL) Then controlKey = -1
-    
-    tempx = CInt(pl.x): tempy = CInt(pl.y)
-    ' Keys that are pressed, not held down: 
-    If keyTimer.hasExpired Then
-    	Dim As String tempk
-    	If MultiKey(KEY_T) Then consoleOpen = -1: tempk = InKey: Exit Sub
-    	'If MultiKey(KEY_F2) Then switch(moveStyle): pl.x = Int(pl.x): pl.y = Int(pl.y): keyTimer.start
-    	If MultiKey(KEY_F3) Then switch(auto_slow): keyTimer.start
-    	#Ifdef NETWORK_enabled
-    	If MultiKey(KEY_I) Then serverQueries = queries.areaInfo   : keyTimer.start
-    	If MultiKey(KEY_O) Then serverQueries = queries.playerCount: keyTimer.start
-    	If MultiKey(KEY_P) Then serverQueries = queries.ping       : keyTimer.start
-    	#EndIf
-    	If buildMode Then
-    		For i As Integer = 1 To BuildingCount
-    			If MultiKey(i+1) Then
-    				If game.curArea.Modify(tempx,tempy, ASCIITile( buildings(i).tex,0,buildings(i).flags )) Then
-						#Ifdef NETWORK_enabled
-				    		pendingModifications+=1
-				    		ReDim Preserve modQueue(1 To pendingModifications) As String
-				    		modQueue(pendingModifications) = Chr(tempx+detCoordOffSet,tempy+detCoordOffSet,i)
-						#Endif
-						'RefreshTile(tileBuf,tempx,tempy)
-						tileBuf.isEmpty = -1
-					EndIf
-					keyTimer.start
-    				Exit For
-    			EndIf
-    		Next i
-       	EndIf
-    	If MultiKey(KEY_N) And MultiKey(KEY_B) And game.viewLevel = zDetail Then
-    		For i As Integer = 1 To 100
-    			tempx = Rand(1,127) : tempy = Rand(1,127)
-    			game.curArea.Modify(tempx,tempy,ASCIITile(ASCIITexture(Asc("#"), 128,128,128),0,BLOCKS_MOVEMENT))
-	    		pendingModifications+=1
-	    		ReDim Preserve modQueue(1 To pendingModifications) As String
-	    		modQueue(pendingModifications) = SEP & Str(tempx) & SEP & Str(tempy) & SEP & "#" & Chr(128,128,128)
-    		Next i
-    		tileBuf.isEmpty = -1
-    		keyTimer.start
-    	EndIf
-
-    If hasMoved Then hasMovedOnline = -1
-End Sub
 
 Const maxMsg = 10
 Dim Shared messageBuffer(1 To maxMsg) As String
