@@ -99,15 +99,13 @@ EndIf
 
 Sleep 500
 my_name =  Chr(Rand(63, 75)) +  Chr(Rand(63, 75))
-sock.put(1)
-sock.put(Chr(protocol.introduce) & my_name)
+sock.put(1) : sock.put(Chr(protocol.introduce) & my_name)
 Print "Name sent"
 
 '*** Here be selection of game ***'
 
 Print "Requesting to join a game..."
-sock.put(1)
-sock.put(Chr(protocol.join, 1) )
+sock.put(1) : sock.put(Chr(protocol.join, 1) )
 
 Do
 	sock.get(traffic_in)
@@ -120,8 +118,8 @@ Do
 	If k = Chr(27) Or k = Chr(255) & "k" Then End
 	Sleep 10
 Loop
-print my_id
-print players(my_id).name
+'print my_id
+'print players(my_id).name
 sleep
 
     Dim gameTimer As FrameTimer
@@ -192,8 +190,7 @@ sleep
 				If move_dir <> 0 Then
 					traffic_out = Chr(protocol.updatePos, move_dir)
 					AddMsg("OUT:"&traffic_out)
-					sock.put(1)
-					sock.put(traffic_out)
+					sock.put(1) : sock.put(traffic_out)
 					traffic_out = ""
 					hasMoved = 0
 					move_dir = 0
@@ -202,8 +199,7 @@ sleep
 				ElseIf msg <> "" And consoleOpen = 0 Then
 					traffic_out = Chr(protocol.message) & players(my_id).name & ": " & msg
 					'AddMsg("OUT:"&traffic_out)
-					sock.put(1)
-					sock.put(traffic_out)
+					sock.put(1) : sock.put(traffic_out)
 					'pingTime = Timer
 					traffic_out = ""
 					msg = ""
@@ -253,12 +249,13 @@ sleep
     sock.close()
     End
 
-
 ''''''''''''''''''''''''''''
 '''                      '''
 '''   END OF MAIN LOOP   '''
 '''                      '''
 ''''''''''''''''''''''''''''
+
+
 
 Sub AddPlayer(plrow As String)
 	Var id = Asc(Mid(plrow,1,1))

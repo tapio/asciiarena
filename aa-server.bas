@@ -101,17 +101,17 @@ If serverShutdown = 2 Then Run exename
 End
 
 Sub ServerThread( curCli As CLIENT_NODE Ptr )
-	Dim As Integer h = 0
+	Dim As Integer h = 0, i = 0
 	Dim As String msg = "", tempst = ""
 	Do Until curCli->cnx->is_closed() Or serverShutdown <> 0
 		'process incoming data
 		If( curCli->cnx->get( h ) ) Then 
 		If( curCli->cnx->get( msg , 1, socket.block ) ) Then
 		If curCli->gameId <> 0 Then
-					ServerOutput "Something came"
+					'ServerOutput "Something came"
 			Select Case Asc(Left(msg,1))
 				Case protocol.updatePos
-					ServerOutput "Movement: "+Str(Asc(Mid(msg,2)))
+					'ServerOutput "Movement: "+Str(Asc(Mid(msg,2)))
 					Select Case Asc(Mid(msg,2))
 						Case 1
 							curCli->y -= 1
@@ -136,12 +136,15 @@ Sub ServerThread( curCli As CLIENT_NODE Ptr )
 					ServerOutput "Connection " & Str(*(curCli->cnx->connection_info())) & " identified as " & curCli->name
 				EndIf
 			ElseIf Asc(Left(msg,1)) = protocol.join Then
-			ServerOutput "Join request detected"
-			curCli->id = games(1).addPlayer(curCli)
-			ServerOutput "Assigned " & curCli->name & " to id " & Str(curCli->id)
-			curCli->send(Chr(protocol.introduce, curCli->id, curCli->x, curCli->y) & curCli->name)
-
-
+				ServerOutput "Join request detected"
+				curCli->id = games(1).addPlayer(curCli)
+				ServerOutput "Assigned " & curCli->name & " to id " & Str(curCli->id) & " and game " & Str(curCli->gameid)
+				games(curCli->gameid).sendToAll(Chr(protocol.introduce, curCli->id, curCli->x, curCli->y) & curCli->name)
+				For i = 1 To maxPlayers
+					If games(curCli->gameid).players(i) <> 0 AndAlso games(curCli->gameid).players(i) <> curCli Then
+						curCli->send(Chr(protocol.introduce, games(curCli->gameid).players(i)->id, games(curCli->gameid).players(i)->x, games(curCli->gameid).players(i)->y) & games(curCli->gameid).players(i)->name)
+					EndIf
+				Next i
 			EndIf
 		EndIf
 		EndIf

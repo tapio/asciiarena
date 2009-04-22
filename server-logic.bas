@@ -95,6 +95,7 @@ Sub CreateGame(title As String, map As String)
 	numGames += 1
 	ReDim Preserve games(1 To numGames)
 	games(numGames) = Game(title)
+	games(numGames).id = numGames
 	For j As Integer = 1 To mapHeight
 		For i As Integer = 1 To mapWidth
 			If rnd > .8 Then games(numGames).map(i,j) = Asc("#")
