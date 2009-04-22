@@ -8,6 +8,7 @@ Const VERSION = "0.0.1"
 #Include Once "def.bi"
 #Include Once "util.bas"
 #Include Once "words.bi"
+#Include Once "protocol.bi"
 '#Include "fbgfx.bi"
 
 Const scrW = 800
@@ -26,6 +27,7 @@ Const viewStartY = 7 * 8
 Const log_enabled = -1
 
 Declare Function GameInput(promt As String = "", x As Integer, y As Integer, stri As String, k As String = "") As String
+Declare Sub AddPlayer(As String)
 Declare Sub AddMsg(_msg As String)
 Declare Sub PrintMessages(x As Integer, y As Integer, _count As Integer = 1)
 Declare Sub DrawASCIIFrame(x1 As Integer, y1 As Integer, x2 As Integer, y2 As Integer, col As UInteger = 0, Title As String = "")
@@ -40,7 +42,6 @@ Const mapWidth = 128
 Const mapHeight = 128
 Dim map(1 To mapWidth,1 To mapHeight) As UByte
 
-#Include Once "protocol.bi"
 
 'Dim Shared As UByte farStarBG(1024, 1024)
 'GenerateDistantStarBG(farStarBG()) 
@@ -64,7 +65,7 @@ End Type
 
 
 Dim Shared maxPlayers As Integer = 32
-ReDim Shared players(maxPlayer) As Player
+ReDim Shared players(maxPlayers) As Player
 Dim Shared numPlayers As Integer = 0
 Dim As String temp, temp2, tempst
 Dim As String msg = "", traffic_in = "", traffic_out = "", k = "" 'k = key
@@ -129,7 +130,7 @@ sock.put(Chr(protocol.introduce) & Str(Rand(63, 75)))
 	        If MultiKey(KEY_DOWN)  Then move_dir = 3
 	        If MultiKey(KEY_LEFT)  Then move_dir = 4
 	        If MultiKey(KEY_RIGHT) Then move_dir = 2
-			If MultiKey(KEY_SPACEBAR) Then action = TRUE
+			'If MultiKey(KEY_SPACE) Then action = TRUE
 		EndIf
 		
 		'' Draw Map
@@ -156,23 +157,12 @@ sock.put(Chr(protocol.introduce) & Str(Rand(63, 75)))
 						AddMsg(Mid(traffic_in,2))
 					Case protocol.updatePos
 						tempid = Asc(Mid(traffic_in,2,1))
-						For i = 1 To numPlayers
-							If players(i).id = tempid Then
-								players(i).x = Mid(traffic_in,3,1)
-								players(i).y = Mid(traffic_in,4,1)
-							EndIf
-						Next i
+						players(tempid).x = Asc(Mid(traffic_in,3,1))
+						players(tempid).y = Asc(Mid(traffic_in,4,1))
 					Case protocol.updateStatus
 						tempid = Asc(Mid(traffic_in,2,1))
-						For i = 1 To numPlayers
-							If players(i).id = tempid Then
-								players(i) = players(numPlayers)
-								players(numPlayers).id = ""
-								numPlayers-=1
-								'If log_enabled Then AddLog(my_name & "Player " & temp & " erased.")
-								Exit For
-							EndIf
-						Next i
+						players(tempid).id = 0
+						numPlayers-=1
 				End Select
 		
 			End If
@@ -247,7 +237,7 @@ sock.put(Chr(protocol.introduce) & Str(Rand(63, 75)))
 ''''''''''''''''''''''''''''
 
 Sub AddPlayer(plrow As String)
-	id = Asc(Mid(plrow,1,1))
+	Var id = Asc(Mid(plrow,1,1))
 	players(id).id		= id
 	players(id).x		= Asc(Mid(plrow,2,1))
 	players(id).x		= Asc(Mid(plrow,3,1))
