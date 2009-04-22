@@ -1,7 +1,5 @@
 
 
-Const DB_players = "db_players.dat"
-
 
 Type CLIENT_NODE
 	name As String = ""
@@ -37,6 +35,7 @@ Type GameFwd As Game
 
 Type Game
 	title As String
+	id As UByte
 	players(maxPlayers) As CLIENT_NODE Ptr
 	map(1 To mapWidth,1 To mapHeight) As UByte
 	'nextGame As GameFwd Ptr
@@ -55,7 +54,14 @@ End Type
 	End Sub
 	Function Game.AddPlayer(cli As CLIENT_NODE Ptr) As UByte
 		For i As Integer = 1 To maxPlayers
-			If this.players(i) = 0 Then this.players(i) = cli: cli->id = i: Return i
+			If this.players(i) = 0 Then
+				this.players(i) = cli
+				cli->id = i
+				cli->x = 10
+				cli->y = 10
+				cli->gameId = this.id
+				Return i
+			EndIf
 		Next i
 		Return 0
 	End Function
@@ -87,6 +93,7 @@ End Sub
 
 Sub CreateGame(title As String, map As String)
 	numGames += 1
+	ReDim Preserve games(1 To numGames)
 	games(numGames) = Game(title)
 	For j As Integer = 1 To mapHeight
 		For i As Integer = 1 To mapWidth

@@ -120,8 +120,9 @@ Do
 	If k = Chr(27) Or k = Chr(255) & "k" Then End
 	Sleep 10
 Loop
-
-
+print my_id
+print players(my_id).name
+sleep
 
     Dim gameTimer As FrameTimer
     Dim trafficTimer As DelayTimer = DelayTimer(0.05)
@@ -159,15 +160,16 @@ Loop
 		Next j
 
 		'' Draw Players
-		For i = 1 To numPlayers
+		For i = 1 To maxPlayers
 			If players(i).id <> 0 Then _
-				Draw String ( viewStartX + 8*players(i).x, viewStartY + 8*players(i).y ), Chr(234), RGB(100,100,100)
+				Draw String ( viewStartX + 8*players(i).x, viewStartY + 8*players(i).y ), "@", RGB(200,100,100)
 		Next i
 		
 		'' Networking
 		If sock.is_closed = FALSE Then
 			'' Process incoming
 			If sock.get(traffic_in) Then
+			AddMsg(traffic_in)
 				Select Case Asc(Left(traffic_in,1))
 					Case protocol.introduce
 						AddPlayer(Mid(traffic_in,2))
@@ -189,12 +191,14 @@ Loop
 			If trafficTimer.hasExpired Then
 				If move_dir <> 0 Then
 					traffic_out = Chr(protocol.updatePos, move_dir)
-					'AddMsg("OUT:"&traffic_out)
+					AddMsg("OUT:"&traffic_out)
 					sock.put(1)
 					sock.put(traffic_out)
 					traffic_out = ""
 					hasMoved = 0
+					move_dir = 0
 					trafficTimer.start
+					moveTimer.start
 				ElseIf msg <> "" And consoleOpen = 0 Then
 					traffic_out = Chr(protocol.message) & players(my_id).name & ": " & msg
 					'AddMsg("OUT:"&traffic_out)
@@ -225,6 +229,8 @@ Loop
         'Print traffic_in
         'Print "Coords:";pl.x;pl.y
  		
+		PrintMessages 10, 20, 8
+		
         k = InKey
 		If k = Chr(255,68) Then SavePNG("shots/shot"+Str(Int(Rnd*9000)+1000)+".png")': Sleep 1000
 		If k = "t" Or k = "T" Then consoleOpen = TRUE
@@ -260,6 +266,7 @@ Sub AddPlayer(plrow As String)
 	players(id).x		= Asc(Mid(plrow,2,1))
 	players(id).y		= Asc(Mid(plrow,3,1))
 	players(id).name	= Mid(plrow,4)
+	numPlayers += 1
 End Sub
 
 

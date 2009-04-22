@@ -64,6 +64,7 @@ Var t = ThreadCreate( Cast(Sub(ByVal As Any Ptr), @accept_thread), @sock )
 ServerOutput "Listening on port " & port
 
 
+CreateGame("Dummy Test Game", "dummy")
 ServerOutput "Created one game"
 
 
@@ -107,11 +108,10 @@ Sub ServerThread( curCli As CLIENT_NODE Ptr )
 		If( curCli->cnx->get( h ) ) Then 
 		If( curCli->cnx->get( msg , 1, socket.block ) ) Then
 		If curCli->gameId <> 0 Then
+					ServerOutput "Something came"
 			Select Case Asc(Left(msg,1))
-				Case protocol.message
-					games(curCli->gameId).sendToAll(Mid(msg,2))
-					ServerOutput("MSG>"&Mid(msg,2))
 				Case protocol.updatePos
+					ServerOutput "Movement: "+Str(Asc(Mid(msg,2)))
 					Select Case Asc(Mid(msg,2))
 						Case 1
 							curCli->y -= 1
@@ -123,6 +123,9 @@ Sub ServerThread( curCli As CLIENT_NODE Ptr )
 							curCli->x -= 1
 					End Select
 					games(curCli->gameId).sendToAll(Chr(protocol.updatePos, curCli->id, curCli->x, curCli->y))
+				Case protocol.message
+					games(curCli->gameId).sendToAll(Mid(msg,2))
+					ServerOutput("MSG>"&Mid(msg,2))
 			End Select
 			
 		' Starting stuff
@@ -136,7 +139,7 @@ Sub ServerThread( curCli As CLIENT_NODE Ptr )
 			ServerOutput "Join request detected"
 			curCli->id = games(1).addPlayer(curCli)
 			ServerOutput "Assigned " & curCli->name & " to id " & Str(curCli->id)
-			curCli->send(Chr(protocol.introduce, curCli->x, curCli->y) & curCli->name)
+			curCli->send(Chr(protocol.introduce, curCli->id, curCli->x, curCli->y) & curCli->name)
 
 
 			EndIf
