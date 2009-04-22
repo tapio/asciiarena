@@ -16,7 +16,7 @@ Type CLIENT_NODE
 	Declare Sub send(msg As String)
 End Type
 	Sub CLIENT_NODE.send(msg As String)
-		this.cnx->put(1)
+		'this.cnx->put(1)
 		this.cnx->put(msg)
 	End Sub
 
@@ -36,17 +36,17 @@ Const maxPlayers = 32
 Type GameFwd As Game 
 
 Type Game
-	name As String
+	title As String
 	players(maxPlayers) As CLIENT_NODE Ptr
 	map(1 To mapWidth,1 To mapHeight) As UByte
 	'nextGame As GameFwd Ptr
-	Declare Constructor (name As String = "")
+	Declare Constructor (title As String = "")
 	Declare Function AddPlayer(cli As CLIENT_NODE Ptr) As UByte
 	Declare Sub removePlayer(id As UByte)
 	Declare Sub sendToAll(msg As String)
 End Type
-	Constructor Game(name As String = "")
-		this.name = name
+	Constructor Game(title As String = "")
+		this.title = title
 	End Constructor
 	Sub Game.sendToAll(msg As String)
 		For i As Integer = 1 to maxPlayers

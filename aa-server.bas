@@ -23,7 +23,6 @@ Declare Sub ServerThread( curCli As CLIENT_NODE Ptr)
 Sub accept_thread( Byval s As socket Ptr )
 	Var new_cnx = New socket
 	Var new_cli = New CLIENT_NODE
-	Dim As Integer h = 0
 	Do
 		new_cnx->listen_to_new( *s )
 		If ( s->is_closed Or serverShutdown ) Then 
@@ -32,7 +31,7 @@ Sub accept_thread( Byval s As socket Ptr )
 		If ( new_cnx->is_closed = FALSE ) Then 
 			MutexLock(lock_players)
 			'If new_cnx->get( h ) Then
-				If new_cnx->get( new_cli->name, 1, socket.BLOCK ) Then 
+				'If new_cnx->get( new_cli->name, 1, socket.BLOCK ) Then 
 					new_cli->cnx = new_cnx
 					ServerOutput "New Connection: " & Str(*(new_cli->cnx->connection_info()))
 					clients += 1
@@ -41,7 +40,7 @@ Sub accept_thread( Byval s As socket Ptr )
 					lastCli = new_cli
 					lastCli->cnx->put(Chr(protocol.message) & "Connection to server established")
 					lastCli->thread = ThreadCreate( Cast(Sub(ByVal As Any Ptr), @ServerThread), lastCli )
-				EndIf
+				'EndIf
 			'EndIf
 			MutexUnLock(lock_players)
 			new_cnx = New socket
@@ -108,7 +107,7 @@ Sub ServerThread( curCli As CLIENT_NODE Ptr )
 		If( curCli->cnx->get( h ) ) Then 
 		If( curCli->cnx->get( msg , 1, socket.block ) ) Then
 		If curCli->gameId <> 0 Then
-			Select Case (Asc(Left(msg,1)) And actionMask)
+			Select Case Asc(Left(msg,1))
 				Case protocol.message
 					games(curCli->gameId).sendToAll(Mid(msg,2))
 					ServerOutput("MSG>"&Mid(msg,2))
@@ -128,12 +127,19 @@ Sub ServerThread( curCli As CLIENT_NODE Ptr )
 			
 		' Starting stuff
 		Else
-			
-			
+			If curCli->name = "" Then
+				If Asc(Left(msg,1)) = protocol.introduce Then
+					curCli->name = Mid(msg,2)
+					ServerOutput "Connection " & Str(*(curCli->cnx->connection_info())) & " identified as " & curCli->name
+				EndIf
+			ElseIf Asc(Left(msg,1)) = protocol.join Then
+			ServerOutput "Join request detected"
 			curCli->id = games(1).addPlayer(curCli)
+			ServerOutput "Assigned " & curCli->name & " to id " & Str(curCli->id)
 			curCli->send(Chr(protocol.introduce, curCli->x, curCli->y) & curCli->name)
 
-			'If curCli->name <> "" Then ServerOutput "Connection " & Str(*(curCli->cnx->connection_info())) & " identified as " & curCli->name
+
+			EndIf
 		EndIf
 		EndIf
 		EndIf

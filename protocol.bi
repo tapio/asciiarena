@@ -1,6 +1,7 @@
 
 Enum protocol
-	introduce	= 0
+	introduce	= 1
+	join
 	message
 	gameInfo
 	mapHeader

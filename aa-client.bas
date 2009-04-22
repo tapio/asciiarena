@@ -97,11 +97,17 @@ If( res ) Then
 	End
 EndIf
 
-Sleep 200
-my_name =  Str(Rand(63, 75)) +  Str(Rand(63, 75))
-
-'sock.put(1)
+Sleep 500
+my_name =  Chr(Rand(63, 75)) +  Chr(Rand(63, 75))
+sock.put(1)
 sock.put(Chr(protocol.introduce) & my_name)
+Print "Name sent"
+
+'*** Here be selection of game ***'
+
+Print "Requesting to join a game..."
+sock.put(1)
+sock.put(Chr(protocol.join, 1) )
 
 Do
 	sock.get(traffic_in)
