@@ -91,11 +91,7 @@ If serveraddress = "" Or port = 0 Then Print "Could not find server.ini or it is
 Print "Connecting to " & serveraddress & ":" & Str(port)
 
 Var res = sock.client( serveraddress, port )
-If( res ) Then
-	Print translate_error(res)
-	Sleep
-	End
-EndIf
+If( res ) Then Print translate_error(res): Sleep: End
 
 Sleep 500
 my_name =  Chr(Rand(63, 75)) +  Chr(Rand(63, 75))
@@ -113,6 +109,12 @@ Do
 		my_id = Asc(Mid(traffic_in,2,1))
 		AddPlayer(Mid(traffic_in,2))
 		Exit Do
+	ElseIf Asc(Left(traffic_in,1)) = protocol.mapData Then
+		tempst = Mid(traffic_in, 3)
+		j = Mid(traffic_in, 2, 1)
+		For i = 1 To Len(tempst)
+			map(i,j) = Asc(Mid(tempst,i,1))
+		Next i
 	EndIf
 	k = InKey
 	If k = Chr(27) Or k = Chr(255) & "k" Then End

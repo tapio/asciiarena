@@ -101,7 +101,7 @@ If serverShutdown = 2 Then Run exename
 End
 
 Sub ServerThread( curCli As CLIENT_NODE Ptr )
-	Dim As Integer h = 0, i = 0
+	Dim As Integer h = 0, i = 0, j = 0
 	Dim As String msg = "", tempst = ""
 	Do Until curCli->cnx->is_closed() Or serverShutdown <> 0
 		'process incoming data
@@ -130,21 +130,32 @@ Sub ServerThread( curCli As CLIENT_NODE Ptr )
 			
 		' Starting stuff
 		Else
+			h = Asc(Left(msg,1))
 			If curCli->name = "" Then
-				If Asc(Left(msg,1)) = protocol.introduce Then
+				If h = protocol.introduce Then
 					curCli->name = Mid(msg,2)
 					ServerOutput "Connection " & Str(*(curCli->cnx->connection_info())) & " identified as " & curCli->name
 				EndIf
-			ElseIf Asc(Left(msg,1)) = protocol.join Then
+			ElseIf h = protocol.join Then
 				ServerOutput "Join request detected"
 				curCli->id = games(1).addPlayer(curCli)
 				ServerOutput "Assigned " & curCli->name & " to id " & Str(curCli->id) & " and game " & Str(curCli->gameid)
+				ServerOutput "Sending map"
+				For j = 1 To mapHeight
+					tempst = ""
+					For i = 1 To mapWidth
+						tempst += Chr(games(curCli->gameid).map(i,j))
+					Next i
+					curCli->send(Chr(protocol.mapData, j)+tempst)
+				Next j
+				ServerOutput "Sending introductions"
 				games(curCli->gameid).sendToAll(Chr(protocol.introduce, curCli->id, curCli->x, curCli->y) & curCli->name)
 				For i = 1 To maxPlayers
 					If games(curCli->gameid).players(i) <> 0 AndAlso games(curCli->gameid).players(i) <> curCli Then
 						curCli->send(Chr(protocol.introduce, games(curCli->gameid).players(i)->id, games(curCli->gameid).players(i)->x, games(curCli->gameid).players(i)->y) & games(curCli->gameid).players(i)->name)
 					EndIf
 				Next i
+
 			EndIf
 		EndIf
 		EndIf

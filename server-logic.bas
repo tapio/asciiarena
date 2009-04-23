@@ -36,6 +36,8 @@ Type GameFwd As Game
 Type Game
 	title As String
 	id As UByte
+	plCount As UByte = 0
+	plLimit As UByte = maxPlayers
 	players(maxPlayers) As CLIENT_NODE Ptr
 	map(1 To mapWidth,1 To mapHeight) As UByte
 	lock_pl As Any Ptr
@@ -44,6 +46,7 @@ Type Game
 	Declare Function AddPlayer(cli As CLIENT_NODE Ptr) As UByte
 	Declare Sub removePlayer(id As UByte)
 	Declare Sub sendToAll(msg As String)
+	Declare Cast() As String
 End Type
 	Constructor Game(title As String = "")
 		this.title = title
@@ -55,13 +58,14 @@ End Type
 		Next i
 	End Sub
 	Function Game.AddPlayer(cli As CLIENT_NODE Ptr) As UByte
-		For i As Integer = 1 To maxPlayers
+		For i As Integer = 1 To this.plLimit
 			If this.players(i) = 0 Then
 				this.players(i) = cli
 				cli->id = i
 				cli->x = 10
 				cli->y = 10
 				cli->gameId = this.id
+				this.plCount += 1
 				Return i
 			EndIf
 		Next i
@@ -70,7 +74,11 @@ End Type
 	Sub Game.removePlayer(id As UByte)
 		this.players(id)->id = 0
 		this.players(id) = 0
+		this.plCount -= 1
 	End Sub
+	Operator Game.Cast() As String
+		Return Str(this.id)+" - "+this.title+" - "+Str(this.plCount)+"/"+Str(this.plLimit)
+	End Operator
 	
 
 Dim Shared As Integer numGames = 0
@@ -101,7 +109,7 @@ Sub CreateGame(title As String, map As String)
 	games(numGames).id = numGames
 	For j As Integer = 1 To mapHeight
 		For i As Integer = 1 To mapWidth
-			If rnd > .8 Then games(numGames).map(i,j) = Asc("#")
+			If rnd > .8 Then games(numGames).map(i,j) = Asc("#") Else games(numGames).map(i,j) = Asc(" ")
 		Next i
 	Next j
 End Sub
