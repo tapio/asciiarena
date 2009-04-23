@@ -42,6 +42,6 @@ End Enum
 #Define SEP Chr(1)
 #Define detCoordOffSet 32
 
-Const mapWidth = 128
-Const mapHeight = 128
+Const mapWidth = 64
+Const mapHeight = 64
 

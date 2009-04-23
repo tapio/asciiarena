@@ -46,7 +46,7 @@ Type Game
 	Declare Function AddPlayer(cli As CLIENT_NODE Ptr) As UByte
 	Declare Sub removePlayer(id As UByte)
 	Declare Sub sendToAll(msg As String)
-	Declare Cast() As String
+	Declare Operator Cast() As String
 End Type
 	Constructor Game(title As String = "")
 		this.title = title

@@ -21,8 +21,8 @@ Dim As Byte workpage
 'Const viewY = 36
 #Define viewX (36)
 #Define viewY (36)
-Const viewStartX = scrW * .5 - viewX * 8
-Const viewStartY = 7 * 8
+Const viewStartX = 10*8'scrW * .5 - viewX * 8
+Const viewStartY = 8'7 * 8
 
 Const log_enabled = -1
 
@@ -111,7 +111,7 @@ Do
 		Exit Do
 	ElseIf Asc(Left(traffic_in,1)) = protocol.mapData Then
 		tempst = Mid(traffic_in, 3)
-		j = Mid(traffic_in, 2, 1)
+		j = Asc(Mid(traffic_in, 2, 1))
 		For i = 1 To Len(tempst)
 			map(i,j) = Asc(Mid(tempst,i,1))
 		Next i
