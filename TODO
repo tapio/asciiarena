@@ -14,8 +14,9 @@ LAST UPDATE: 2009-04-23
 [ ] Moving
 	[X] Players can move
 	[X] Others can see movement
-	[ ] Collisions with map
+	[X] Collisions with map
 	[ ] Collisions with other players
+	[ ] Line-of-Sight
 
 [ ] Selecting and joining a game
 	[ ] Server sends available games

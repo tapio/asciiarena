@@ -10,6 +10,7 @@ Enum protocol
 	updateStatus
 End Enum
 
+
 Enum queries
 	ping        = &b00000001
 	playerCount = &b00000010

@@ -110,6 +110,7 @@ Sub CreateGame(title As String, map As String)
 	For j As Integer = 1 To mapHeight
 		For i As Integer = 1 To mapWidth
 			If rnd > .8 Then games(numGames).map(i,j) = Asc("#") Else games(numGames).map(i,j) = Asc(" ")
+			If i=1 Or j=1 Or i=mapWidth Or j=mapHeight Then games(numGames).map(i,j) = Asc("#")
 		Next i
 	Next j
 End Sub

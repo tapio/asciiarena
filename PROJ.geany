@@ -1,0 +1,21 @@
+
+[indentation]
+indent_width=4
+indent_type=1
+indent_hard_tab_width=8
+detect_indent=false
+indent_mode=2
+
+[project]
+name=Ascii Arena
+base_path=/home/tapio/FreeBASIC Projects/AsciiArena
+make_in_base_path=false
+description=
+run_cmd=
+
+[files]
+current_page=2
+FILE_NAME_0=1929;FreeBasic;0;16;1;1;0;/home/tapio/FreeBASIC Projects/AsciiArena/aa-client.bas;0
+FILE_NAME_1=38;FreeBasic;0;16;1;1;0;/home/tapio/FreeBASIC Projects/AsciiArena/protocol.bi;0
+FILE_NAME_2=3158;FreeBasic;0;0;1;1;0;/home/tapio/FreeBASIC Projects/AsciiArena/aa-server.bas;0
+FILE_NAME_3=2983;FreeBasic;0;16;1;1;0;/home/tapio/FreeBASIC Projects/AsciiArena/server-logic.bas;0

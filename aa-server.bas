@@ -112,17 +112,18 @@ Sub ServerThread( curCli As CLIENT_NODE Ptr )
 			Select Case Asc(Left(msg,1))
 				Case protocol.updatePos
 					'ServerOutput "Movement: "+Str(Asc(Mid(msg,2)))
+					i = curCli->x
+					j = curCli->y
 					Select Case Asc(Mid(msg,2))
-						Case 1
-							curCli->y -= 1
-						Case 2
-							curCli->x += 1
-						Case 3
-							curCli->y += 1
-						Case 4
-							curCli->x -= 1
+						Case 1 : j -= 1
+						Case 2 : i += 1
+						Case 3 : j += 1
+						Case 4 : i -= 1
 					End Select
-					games(curCli->gameId).sendToAll(Chr(protocol.updatePos, curCli->id, curCli->x, curCli->y))
+					If games(curCli->gameId).map(i,j) = Asc(" ") Then
+						curCli->x = i : curCli->y = j
+						games(curCli->gameId).sendToAll(Chr(protocol.updatePos, curCli->id, i, j))
+					EndIf
 				Case protocol.message
 					games(curCli->gameId).sendToAll(Mid(msg,2))
 					ServerOutput("MSG>"&Mid(msg,2))

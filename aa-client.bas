@@ -69,7 +69,7 @@ Dim As String msg = "", traffic_in = "", traffic_out = "", k = "" 'k = key
 Dim As String my_name
 Dim As UByte my_id, char, testbyte
 Dim As Double pingTime
-Dim As Integer i,j, count
+Dim As Integer i,j, count, ping
 
 #Include "crt/string.bi"
 #Include "chisock/chisock.bi"
@@ -139,7 +139,6 @@ sleep
     ' ------- MAIN LOOP ------- '
     Do
         gameTimer.Update
-		TimeManager()
         ScreenSet workpage, workpage Xor 1
         Cls
         
