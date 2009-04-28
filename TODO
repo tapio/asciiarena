@@ -1,15 +1,15 @@
-AsciiArena TODO
----------------
-LAST UPDATE: 2009-04-23
+Ascii Arena TODO
+----------------
+LAST UPDATE: 2009-04-28
 
 [ ] General
 	[ ] Make server thread safe
 
 [ ] Map
 	[X] Client can display map
-	[ ] Server streams map data
-	[ ] Client interprets
-	[ ] Server loads from file
+	[X] Server streams map data
+	[X] Client interprets
+	[ ] Server loads map from file
 
 [ ] Moving
 	[X] Players can move
@@ -18,17 +18,19 @@ LAST UPDATE: 2009-04-23
 	[ ] Collisions with other players
 	[ ] Line-of-Sight
 
+[ ] Weapon
+	[X] Client sends command
+	[X] Server data structures
+	[ ] Server side handling
+	[ ] Collision detection / effects
+	[+] Clien data structures
+	[ ] Client side display
+
 [ ] Selecting and joining a game
 	[ ] Server sends available games
 	[ ] Client displays them and allows for choice
 	[X] Actual joining
 	[ ] Error handling (e.g. full)
-
-[ ] Fighting
-	[ ] Client sends command
-	[ ] Client knows how to display
-	[ ] Server particle system
-	[ ] Server collision detection and result
 
 [ ] Match
 	[ ] Frags

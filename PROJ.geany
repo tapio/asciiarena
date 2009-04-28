@@ -14,8 +14,8 @@ description=
 run_cmd=
 
 [files]
-current_page=2
-FILE_NAME_0=1929;FreeBasic;0;16;1;1;0;/home/tapio/FreeBASIC Projects/AsciiArena/aa-client.bas;0
-FILE_NAME_1=38;FreeBasic;0;16;1;1;0;/home/tapio/FreeBASIC Projects/AsciiArena/protocol.bi;0
-FILE_NAME_2=3158;FreeBasic;0;0;1;1;0;/home/tapio/FreeBASIC Projects/AsciiArena/aa-server.bas;0
-FILE_NAME_3=2983;FreeBasic;0;16;1;1;0;/home/tapio/FreeBASIC Projects/AsciiArena/server-logic.bas;0
+current_page=0
+FILE_NAME_0=1323;FreeBasic;0;16;1;1;0;/home/tapio/FreeBASIC Projects/AsciiArena/aa-client.bas;0
+FILE_NAME_1=875;FreeBasic;0;16;1;1;0;/home/tapio/FreeBASIC Projects/AsciiArena/protocol.bi;0
+FILE_NAME_2=2850;FreeBasic;0;0;1;1;0;/home/tapio/FreeBASIC Projects/AsciiArena/aa-server.bas;0
+FILE_NAME_3=228;FreeBasic;0;16;1;1;0;/home/tapio/FreeBASIC Projects/AsciiArena/server-logic.bas;0

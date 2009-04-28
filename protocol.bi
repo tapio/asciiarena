@@ -8,8 +8,16 @@ Enum protocol
 	mapData
 	updatePos
 	updateStatus
+	newBlastWave
 End Enum
 
+Enum actions
+	north		= 1
+	east
+	south
+	west
+	fire
+End Enum
 
 Enum queries
 	ping        = &b00000001
@@ -46,3 +54,7 @@ End Enum
 Const mapWidth = 64
 Const mapHeight = 64
 
+Const timestep = 0.05
+
+#Define encSpd(s) (CUByte(s*16.0))
+#Define decSpd(b) (CSng(b)/16.0)

@@ -47,6 +47,17 @@ Dim map(1 To mapWidth,1 To mapHeight) As UByte
 #Define char_lander   Chr(227)
 #Define char_walking  "@"
 
+Type BlastWave
+	x			As UByte
+	y			As UByte
+	energy		As Single = 10
+	energyUsage	As Single = 1.0
+	speed		As Single = 2.0
+	startTime	As Double
+	nextNode	As BlastWave Ptr
+	'color As UInteger
+End Type
+
 Type Player
 	id 	 As UByte
 	name As String
@@ -122,7 +133,7 @@ Do
 Loop
 'print my_id
 'print players(my_id).name
-sleep
+'sleep
 
     Dim gameTimer As FrameTimer
     Dim trafficTimer As DelayTimer = DelayTimer(0.05)
@@ -144,11 +155,11 @@ sleep
         
         'If consoleOpen = 0 Then Keys pl, tileBuf
         If moveTimer.hasExpired And Not consoleOpen Then
-			If MultiKey(KEY_UP)    Then move_dir = 1
-	        If MultiKey(KEY_DOWN)  Then move_dir = 3
-	        If MultiKey(KEY_LEFT)  Then move_dir = 4
-	        If MultiKey(KEY_RIGHT) Then move_dir = 2
-			'If MultiKey(KEY_SPACE) Then action = TRUE
+			If MultiKey(KEY_UP)    Then move_dir = actions.north
+	        If MultiKey(KEY_DOWN)  Then move_dir = actions.south
+	        If MultiKey(KEY_LEFT)  Then move_dir = actions.west
+	        If MultiKey(KEY_RIGHT) Then move_dir = actions.east
+			If MultiKey(KEY_SPACE) Then move_dir = actions.fire
 		EndIf
 		
 		'' Draw Map
@@ -172,8 +183,8 @@ sleep
 				Select Case Asc(Left(traffic_in,1))
 					Case protocol.introduce
 						AddPlayer(Mid(traffic_in,2))
-					Case protocol.message
-						AddMsg(Mid(traffic_in,2))
+					Case protocol.newBlastWave
+						
 					Case protocol.updatePos
 						tempid = Asc(Mid(traffic_in,2,1))
 						players(tempid).x = Asc(Mid(traffic_in,3,1))
@@ -182,6 +193,8 @@ sleep
 						tempid = Asc(Mid(traffic_in,2,1))
 						players(tempid).id = 0
 						numPlayers-=1
+					Case protocol.message
+						AddMsg(Mid(traffic_in,2))
 				End Select
 		
 			End If

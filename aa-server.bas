@@ -9,15 +9,15 @@ WindowTitle "AsciiArena Server"
 
 #Include Once "chisock/chisock.bi"
 #Include Once "def.bi"
+'#Include Once "util.bas"
 #Include Once "words.bi"
 Using chi
 #Include Once "protocol.bi"
 #Include Once "server-logic.bas"
 
-
-
 Declare Sub ServerOutput(_st As String)
 Declare Sub ServerThread( curCli As CLIENT_NODE Ptr)
+Declare Sub BlastManagement(firstBlast As BlastWave Ptr)
 
 
 Sub accept_thread( Byval s As socket Ptr )
@@ -100,6 +100,10 @@ ServerOutput "#### Server terminated on " & Date & " " & Time
 If serverShutdown = 2 Then Run exename
 End
 
+
+''					''
+''	ServerThread	''
+''					''
 Sub ServerThread( curCli As CLIENT_NODE Ptr )
 	Dim As Integer h = 0, i = 0, j = 0
 	Dim As String msg = "", tempst = ""
@@ -115,10 +119,12 @@ Sub ServerThread( curCli As CLIENT_NODE Ptr )
 					i = curCli->x
 					j = curCli->y
 					Select Case Asc(Mid(msg,2))
-						Case 1 : j -= 1
-						Case 2 : i += 1
-						Case 3 : j += 1
-						Case 4 : i -= 1
+						Case actions.north : j -= 1
+						Case actions.east  : i += 1
+						Case actions.south : j += 1
+						Case actions.west  : i -= 1
+						Case actions.fire
+							
 					End Select
 					If games(curCli->gameId).map(i,j) = Asc(" ") Then
 						curCli->x = i : curCli->y = j
