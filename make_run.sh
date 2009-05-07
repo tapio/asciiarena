@@ -1,5 +1,7 @@
 #!/bin/sh
 
+pkill aa-server
+
 fbc -w all "aa-server.bas"
 fbc -w all "aa-client.bas"
 

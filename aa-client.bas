@@ -50,7 +50,7 @@ Type BlastWave
 	y			As UByte
 	energy		As Single = 10
 	energyUsage	As Single = 1.0
-	speed		As Single = 2.0
+	speed		As Single = 5.0
 	startTime	As Double
 	nextNode	As BlastWave Ptr
 	'color As UInteger
@@ -186,10 +186,11 @@ Loop
 		'' Draw Blasts
 		Dim As BlastWave Ptr curBlast = firstBlast, prevBlast = 0
 		While curBlast <> 0
+		'AddMsg("blast present")
 			Var dist = ((Timer - curBlast->startTime) * curBlast->speed)
 			Var ene = curBlast->energy - (dist * curBlast->energyUsage)
 			If ene >= 1 Then
-				DrawASCIIFrame(curBlast->x, curBlast->y, dist, RGB(0,255,0))
+				DrawASCIICircle(curBlast->x, curBlast->y, Int(dist), RGB(0,255,0))
 				prevBlast = curBlast
 				curBlast = curBlast->nextNode
 			Else
@@ -209,7 +210,8 @@ Loop
 					Case protocol.introduce
 						AddPlayer(Mid(traffic_in,2))
 					Case protocol.newBlastWave
-						Var newWave = New BlastWave(Asc(Mid(traffic_in,2)),Asc(Mid(traffic_in,3)))
+						Var newWave = New BlastWave(Asc(Mid(traffic_in,2,1)),Asc(Mid(traffic_in,3,1)))
+						newWave->startTime = Timer
 						newWave->nextNode = firstBlast
 						firstBlast = newWave
 					Case protocol.updatePos
@@ -330,9 +332,10 @@ Sub PrintMessages(x As Integer, y As Integer, _count As Integer = 1)
 	#define mcolmin 32.0
 	For i As Integer = 1 To _count
 		If messageBuffer(i) = "" Then Return
-		Draw String ( x, y + (i-1)*8 ), messageBuffer(i), RGB( 	blend(mcolr,mcolmin,(_count-i)/_count), _
-																blend(mcolg,mcolmin,(_count-i)/_count), _
-																blend(mcolb,mcolmin,(_count-i)/_count)  )
+		Draw String ( x, y + (i-1)*8 ), messageBuffer(i), _
+				RGB(blend(mcolr,mcolmin,(_count-i)/_count), _
+					blend(mcolg,mcolmin,(_count-i)/_count), _
+					blend(mcolb,mcolmin,(_count-i)/_count))
 	Next i
 End Sub
 
@@ -371,7 +374,7 @@ End Sub
 
 
 Sub circlePoints(cx As Integer, cy As Integer, x As Integer, y As Integer, c As UInteger)
-	#Define drawChar(x,y) Draw String (x,y), "*", c 
+	#Define drawChar(i,j) Draw String (viewStartX + (i)*8, viewStartY + (j)*8), "*", c
 	If (x = 0) Then
 		drawChar(cx, cy + y)
 		drawChar(cx, cy - y)
@@ -397,7 +400,6 @@ End Sub
 Sub DrawASCIICircle(xCenter As Integer, yCenter As Integer, radius As Integer, c As UInteger=0)
 	If c = 0 Then c = LoWord(Color())
 	Dim As Integer x = 0, y = radius, p = (5 - radius*4)/4
-
 	circlePoints(xCenter, yCenter, x, y, c)
 	While (x < y)
 		x += 1
