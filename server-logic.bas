@@ -3,10 +3,6 @@ Type GameFwd As Game
 Type ClientFwd As CLIENT_NODE
 Type WeaponFwd As Weapon
 
-'Function Distance(x1 As Integer, y1 As Integer, x2 As Integer, y2 As Integer) As Single
-'	Return Sqr( CSng((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1)) )
-'End Function 
-
 
 Type BlastWave
 	x			As UByte
@@ -49,6 +45,7 @@ End Type
 	End Sub
 	Function CLIENT_NODE.takeDmg(amount As Single) As UByte
 		this.hp -= amount
+		If this.hp < 0 Then this.hp = 0
 		If this.hp > 0 Then Return Int(this.hp/this.maxhp *100)
 		Return 0
 	End Function
@@ -146,13 +143,18 @@ End Type
 			Var dist = ((Timer - curBlast->startTime) * curBlast->speed)
 			Var ene = curBlast->energy - (dist * curBlast->energyUsage)
 			If ene >= 1 Then
-				For i As Integer = 1 to this.plLimit
-					If this.players(i) <> 0 AndAlso Int(Distance(curBlast->x, curBlast->y, _
-						this.players(i)->x, this.players(i)->y)) = dist Then
-							Var temp = this.players(i)->takeDmg(ene * curBlast->dmgMult)
-							'this.sendToAll(Chr(protocol.updateStatus, players(i)->id, temp))
-					EndIf
-				Next i
+				If dist > 1 Then
+					For i As Integer = 1 to this.plLimit
+						'If this.players(i) <> 0 Then ServerOutput(Str(Int(Distance(curBlast->x, curBlast->y, _
+							'this.players(i)->x, this.players(i)->y)))& ":" & Str(dist))
+						If this.players(i) <> 0 AndAlso Int(Distance(curBlast->x, curBlast->y, _
+							this.players(i)->x, this.players(i)->y)) = Int(dist) Then
+								Var temp = this.players(i)->takeDmg(ene * curBlast->dmgMult)
+								'this.sendToAll(Chr(protocol.updateStatus, players(i)->id, temp))
+								ServerOutput "DMG"
+						EndIf
+					Next i
+				EndIf
 				prevBlast = curBlast
 				curBlast = curBlast->nextNode
 			Else
