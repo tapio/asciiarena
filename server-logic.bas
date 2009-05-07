@@ -129,8 +129,7 @@ End Type
 		this.sendToAll(Chr(protocol.newBlastWave, newBlast->x, newBlast->y, newBlast->energy, encSpd(newBlast->speed)))
 	End Sub
 	Sub Game.updateLogic()
-		Var curBlast = this.firstBlast
-		Dim As BlastWave Ptr prevBlast = 0
+		Dim As BlastWave Ptr curBlast = firstBlast, prevBlast = 0
 		While curBlast <> 0
 			Var dist = ((Timer - curBlast->startTime) * curBlast->speed)
 			Var ene = curBlast->energy - (dist * curBlast->energyUsage)
@@ -145,10 +144,10 @@ End Type
 				prevBlast = curBlast
 				curBlast = curBlast->nextNode
 			Else
-				If this.firstBlast = curBlast AndAlso curBlast->nextNode = 0 Then this.firstBlast = 0
+				If this.firstBlast = curBlast Then this.firstBlast = curBlast->nextNode
 				If prevBlast <> 0 Then prevBlast->nextNode = curBlast->nextNode
 				Delete(curBlast)
-				curBlast = prevBlast->nextNode
+				If prevBlast <> 0 Then curBlast = prevBlast->nextNode Else curBlast = 0
 			EndIf
 		Wend
 	End Sub

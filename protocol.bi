@@ -1,4 +1,21 @@
 
+'' PROTOCOLS
+'' > to server
+'' < to client
+'' P proto identifier
+''
+'' > introduce			P,my_name
+'' < introduce			P,ID,x,y,name
+'' > join				P,game_id
+'' < mapData			P,mapdata
+'' > message			P,message
+'' < message			P,message
+'' > updatePos			P,move_dir
+'' < updatePos			P,ID,x,y
+'' > newBlastWave		P
+'' < newBlastWave		P,x,y
+
+
 Enum protocol
 	introduce	= 1
 	join

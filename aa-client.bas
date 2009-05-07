@@ -31,7 +31,7 @@ Declare Sub AddPlayer(As String)
 Declare Sub AddMsg(_msg As String)
 Declare Sub PrintMessages(x As Integer, y As Integer, _count As Integer = 1)
 Declare Sub DrawASCIIFrame(x1 As Integer, y1 As Integer, x2 As Integer, y2 As Integer, col As UInteger = 0, Title As String = "")
-
+Declare Sub DrawASCIICircle(xCenter As Integer, yCenter As Integer, radius As Integer, c As UInteger=0)
 
 Const TimeSyncInterval = 5.000
 Declare Sub TimeManager()
@@ -40,8 +40,6 @@ Dim Shared As ULongInt gametime = 0
 
 Dim map(1 To mapWidth,1 To mapHeight) As UByte
 
-'Dim Shared As UByte farStarBG(1024, 1024)
-'GenerateDistantStarBG(farStarBG()) 
 
 #Define char_starship Chr(234)
 #Define char_lander   Chr(227)
@@ -56,7 +54,15 @@ Type BlastWave
 	startTime	As Double
 	nextNode	As BlastWave Ptr
 	'color As UInteger
+	Declare Constructor(x As UByte = 0, y As UByte = 0)
 End Type
+    Constructor BlastWave(x As UByte = 0, y As UByte = 0)
+        this.x   = x
+        this.y   = y
+    End Constructor
+
+Dim firstBlast As BlastWave Ptr = 0
+
 
 Type Player
 	id 	 As UByte
@@ -143,7 +149,7 @@ Loop
 	Dim Shared As Byte moveStyle = 0, hasMoved = 0, hasMovedOnline = 0
 	Dim Shared As Byte consoleOpen = 0
 	Dim As UByte tempid, tempx, tempy, move_dir
-	Dim As Byte helpscreen = 0
+	Dim As Byte helpscreen = 0, fire = 0
 
 
 
@@ -159,7 +165,9 @@ Loop
 	        If MultiKey(KEY_DOWN)  Then move_dir = actions.south
 	        If MultiKey(KEY_LEFT)  Then move_dir = actions.west
 	        If MultiKey(KEY_RIGHT) Then move_dir = actions.east
-			If MultiKey(KEY_SPACE) Then move_dir = actions.fire
+		EndIf
+		If keyTimer.hasExpired And Not consoleOpen Then
+			If MultiKey(KEY_SPACE) Then fire = TRUE: keyTimer.start
 		EndIf
 		
 		'' Draw Map
@@ -175,6 +183,23 @@ Loop
 				Draw String ( viewStartX + 8*players(i).x, viewStartY + 8*players(i).y ), "@", RGB(200,100,100)
 		Next i
 		
+		'' Draw Blasts
+		Dim As BlastWave Ptr curBlast = firstBlast, prevBlast = 0
+		While curBlast <> 0
+			Var dist = ((Timer - curBlast->startTime) * curBlast->speed)
+			Var ene = curBlast->energy - (dist * curBlast->energyUsage)
+			If ene >= 1 Then
+				DrawASCIIFrame(curBlast->x, curBlast->y, dist, RGB(0,255,0))
+				prevBlast = curBlast
+				curBlast = curBlast->nextNode
+			Else
+				If firstBlast = curBlast Then firstBlast = curBlast->nextNode
+				If prevBlast <> 0 Then prevBlast->nextNode = curBlast->nextNode
+				Delete(curBlast)
+				If prevBlast <> 0 Then curBlast = prevBlast->nextNode Else curBlast = 0
+			EndIf
+		Wend
+		
 		'' Networking
 		If sock.is_closed = FALSE Then
 			'' Process incoming
@@ -184,7 +209,9 @@ Loop
 					Case protocol.introduce
 						AddPlayer(Mid(traffic_in,2))
 					Case protocol.newBlastWave
-						
+						Var newWave = New BlastWave(Asc(Mid(traffic_in,2)),Asc(Mid(traffic_in,3)))
+						newWave->nextNode = firstBlast
+						firstBlast = newWave
 					Case protocol.updatePos
 						tempid = Asc(Mid(traffic_in,2,1))
 						players(tempid).x = Asc(Mid(traffic_in,3,1))
@@ -210,6 +237,12 @@ Loop
 					move_dir = 0
 					trafficTimer.start
 					moveTimer.start
+				ElseIf fire <> 0 Then
+					AddMsg("OUT: FIRE")
+					sock.put(1) : sock.put(Chr(protocol.newBlastWave))
+					traffic_out = ""
+					fire = 0
+					trafficTimer.start
 				ElseIf msg <> "" And consoleOpen = 0 Then
 					traffic_out = Chr(protocol.message) & players(my_id).name & ": " & msg
 					'AddMsg("OUT:"&traffic_out)
@@ -335,6 +368,50 @@ Sub DrawASCIIFrame(x1 As Integer, y1 As Integer, x2 As Integer, y2 As Integer, c
 	Draw String (x2,y2), Chr(188), col '217
 	If Title <> "" Then Line (x1+15, y1)-(x1+15+8*Len(Title), y1+7), RGB(0,0,0), BF : Draw String (x1+16, y1), Title, col
 End Sub
+
+
+Sub circlePoints(cx As Integer, cy As Integer, x As Integer, y As Integer, c As UInteger)
+	#Define drawChar(x,y) Draw String (x,y), "*", c 
+	If (x = 0) Then
+		drawChar(cx, cy + y)
+		drawChar(cx, cy - y)
+		drawChar(cx + y, cy)
+		drawChar(cx - y, cy)
+	ElseIf (x = y) Then
+		drawChar(cx + x, cy + y)
+		drawChar(cx - x, cy + y)
+		drawChar(cx + x, cy - y)
+		drawChar(cx - x, cy - y)
+	ElseIf (x < y) Then
+		drawChar(cx + x, cy + y)
+		drawChar(cx - x, cy + y)
+		drawChar(cx + x, cy - y)
+		drawChar(cx - x, cy - y)
+		drawChar(cx + y, cy + x)
+		drawChar(cx - y, cy + x)
+		drawChar(cx + y, cy - x)
+		drawChar(cx - y, cy - x)
+	EndIf
+End Sub
+
+Sub DrawASCIICircle(xCenter As Integer, yCenter As Integer, radius As Integer, c As UInteger=0)
+	If c = 0 Then c = LoWord(Color())
+	Dim As Integer x = 0, y = radius, p = (5 - radius*4)/4
+
+	circlePoints(xCenter, yCenter, x, y, c)
+	While (x < y)
+		x += 1
+		If (p < 0) Then
+			p += 2*x+1
+		Else
+			y -= 1
+			p += 2*(x-y)+1
+		EndIf
+		circlePoints(xCenter, yCenter, x, y, c)
+	Wend
+End Sub
+
+
 
 Sub TimeManager()
 	Static timeGame As DelayTimer = DelayTimer(1.0)

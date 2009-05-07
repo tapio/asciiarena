@@ -123,13 +123,13 @@ Sub ServerThread( curCli As CLIENT_NODE Ptr )
 						Case actions.east  : i += 1
 						Case actions.south : j += 1
 						Case actions.west  : i -= 1
-						Case actions.fire
-							
 					End Select
 					If games(curCli->gameId).map(i,j) = Asc(" ") Then
 						curCli->x = i : curCli->y = j
 						games(curCli->gameId).sendToAll(Chr(protocol.updatePos, curCli->id, i, j))
 					EndIf
+				Case protocol.newBlastWave
+					games(curCli->gameId).sendToAll(Chr(protocol.newBlastWave, curCli->x, curCli->y))
 				Case protocol.message
 					games(curCli->gameId).sendToAll(Mid(msg,2))
 					ServerOutput("MSG>"&Mid(msg,2))
