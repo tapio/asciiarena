@@ -1,9 +1,9 @@
 
 Type GameFwd As Game 
 
-Function Distance(x1 As Integer, y1 As Integer, x2 As Integer, y2 As Integer) As Single
-	Return Sqr( CSng((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1)) )
-End Function 
+'Function Distance(x1 As Integer, y1 As Integer, x2 As Integer, y2 As Integer) As Single
+'	Return Sqr( CSng((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1)) )
+'End Function 
 
 
 Type BlastWave
@@ -73,6 +73,7 @@ Const maxPlayers = 8
 Type Game
 	title As String
 	id As UByte
+	thread As Any Ptr = 0
 	plCount As UByte = 0
 	plLimit As UByte = maxPlayers
 	lock_pl As Any Ptr
@@ -159,8 +160,29 @@ Dim Shared games(1 To numGames) As Game Ptr
 
 
 
-Sub GameThread(curGame As Any Ptr)
-
+Sub GameThread(curGame As Game Ptr)
+	Dim statusTimer As DelayTimer = DelayTimer(0.5)
+	Dim blastTimer As DelayTimer = DelayTimer(0.04)
+	Dim i As Integer
+	Do Until serverShutdown <> 0
+		
+		If statusTimer.hasExpired Then
+			For i As Integer = 1 to maxPlayers
+				If curGame->players(i) <> 0 Then _
+					curGame->players(i)->send(Chr(protocol.updateStatus, i, curGame->players(i)->takeDmg(0), 100))
+			Next i
+			statusTimer.start
+		EndIf
+		
+		If blastTimer.hasExpired Then
+		
+			blastTimer.start
+		Else
+			Sleep 4
+		EndIf
+		
+		Sleep 1
+	Loop
 End Sub
 
 
@@ -191,6 +213,7 @@ Sub CreateGame(title As String, map As String)
 			If i=1 Or j=1 Or i=mapWidth Or j=mapHeight Then games(numGames)->map(i,j) = Asc("#")
 		Next i
 	Next j
+	games(numGames)->thread = ThreadCreate( Cast(Sub(ByVal As Any Ptr), @GameThread), games(numGames) )
 End Sub
 
 

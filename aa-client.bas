@@ -21,8 +21,8 @@ Dim As Byte workpage
 'Const viewY = 36
 #Define viewX (36)
 #Define viewY (36)
-Const viewStartX = 10*8'scrW * .5 - viewX * 8
-Const viewStartY = 8'7 * 8
+Const viewStartX = 8*10'scrW * .5 - viewX * 8
+Const viewStartY = 8*4'7 * 8
 
 Const log_enabled = -1
 
@@ -32,6 +32,7 @@ Declare Sub AddMsg(_msg As String)
 Declare Sub PrintMessages(x As Integer, y As Integer, _count As Integer = 1)
 Declare Sub DrawASCIIFrame(x1 As Integer, y1 As Integer, x2 As Integer, y2 As Integer, col As UInteger = 0, Title As String = "")
 Declare Sub DrawASCIICircle(xCenter As Integer, yCenter As Integer, radius As Integer, c As UInteger=0)
+Declare Sub DrawASCIIBar(x As Integer, y As Integer, w As Integer, value As Integer, maxValue As Integer, col1 As UInteger, col2 As UInteger, barchar As String = "|")
 
 Const TimeSyncInterval = 5.000
 Declare Sub TimeManager()
@@ -69,7 +70,8 @@ Type Player
 	name As String
 	x    As UByte
 	y    As UByte
-    curIcon As String = char_starship
+	cond As UByte = 100
+	ene  As UByte = 50
     Declare Constructor(x As UByte = 0, y As UByte = 0)
 End Type
     Constructor Player(x As UByte = 0, y As UByte = 0)
@@ -220,8 +222,25 @@ Loop
 						players(tempid).y = Asc(Mid(traffic_in,4,1))
 					Case protocol.updateStatus
 						tempid = Asc(Mid(traffic_in,2,1))
-						players(tempid).id = 0
-						numPlayers-=1
+						i = Asc(Mid(traffic_in,3,1))
+						players(tempid).cond = i
+						If i = 0 Then
+							players(tempid).id = 0
+							numPlayers-=1
+							If tempid = my_id Then
+								sock.close()
+								Cls
+								temp = "You died!"
+								Draw String ( (scrW - Len(temp)*8)*.5, (scrH-8)*.5 ), temp, RGB(255,0,0)
+								switch(workpage)
+								ScreenSet workpage, workpage Xor 1
+								Sleep 1500,1
+								Sleep
+								End 
+							EndIf
+						Else
+							players(tempid).ene = Asc(Mid(traffic_in,4,1))
+						Endif
 					Case protocol.message
 						AddMsg(Mid(traffic_in,2))
 				End Select
@@ -273,7 +292,11 @@ Loop
         'Print "Players:";numPlayers
         'Print traffic_in
         'Print "Coords:";pl.x;pl.y
- 		
+		Draw String (8*12, 8*1), "Condition:", RGB(128,128,128)
+		DrawAsciiBar(12, 2, 30, players(my_id).cond, 100, RGB(255,0,0), RGB(0,255,0),   Chr(177))
+		Draw String (8*12, 8*3), "Charge:", RGB(128,128,128)
+		DrawAsciiBar(12, 4, 30, players(my_id).ene,  100, RGB(0,0,255), RGB(255,0,255), Chr(178))
+
 		PrintMessages 10, 20, 8
 		
         k = InKey
@@ -370,6 +393,14 @@ Sub DrawASCIIFrame(x1 As Integer, y1 As Integer, x2 As Integer, y2 As Integer, c
 	Draw String (x1,y2), Chr(200), col '192
 	Draw String (x2,y2), Chr(188), col '217
 	If Title <> "" Then Line (x1+15, y1)-(x1+15+8*Len(Title), y1+7), RGB(0,0,0), BF : Draw String (x1+16, y1), Title, col
+End Sub
+
+Sub DrawASCIIBar(x As Integer, y As Integer, w As Integer, value As Integer, maxValue As Integer, col1 As UInteger, col2 As UInteger, barchar As String = "|")
+	'x = 8*x : y = 8*y
+	'w = value / maxValue * w
+	For i As Integer = 0 To value / maxValue * w
+		Draw String ( (x+i)*8, y*8 ), barchar, blendRGB(col1,col2,1.0-CSng(i)/Csng(w))
+	Next i
 End Sub
 
 

@@ -7,10 +7,10 @@ WindowTitle "AsciiArena Server"
 	#Define exename "aa-server"
 #EndIf
 
-#Include Once "chisock/chisock.bi"
 #Include Once "def.bi"
-'#Include Once "util.bas"
+#Include Once "util.bas"
 #Include Once "words.bi"
+#Include Once "chisock/chisock.bi"
 Using chi
 #Include Once "protocol.bi"
 #Include Once "server-logic.bas"
@@ -175,12 +175,12 @@ Sub ServerThread( curCli As CLIENT_NODE Ptr )
 End Sub
 
 
-Sub AddLog(logstr As String, filename As String = "log.txt")
-	Var f = FreeFile
-	Open filename For Append As #f
-		Print #f, logstr
-    Close #f
-End Sub
+'Sub AddLog(logstr As String, filename As String = "log.txt")
+'	Var f = FreeFile
+'	Open filename For Append As #f
+'		Print #f, logstr
+'   Close #f
+'End Sub
 
 
 Sub ServerOutput(_st As String)
