@@ -1,5 +1,7 @@
 
 Type GameFwd As Game 
+Type ClientFwd As CLIENT_NODE
+Type WeaponFwd As Weapon
 
 'Function Distance(x1 As Integer, y1 As Integer, x2 As Integer, y2 As Integer) As Single
 '	Return Sqr( CSng((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1)) )
@@ -16,19 +18,10 @@ Type BlastWave
 	startTime	As Double
 	nextNode	As BlastWave Ptr
 	'color As UInteger
+	'Declare Constructor (x As UByte, y As UByte, energy As Single)
 End Type
 
-
-Type Weapon
-	energy		As Single = 10
-	maxEnergy	As Single = 10
-	energyUsage	As Single = 1.0
-	dmgMult		As Single = 1.0
-	speed		As Single = 1.0
-	recharge	As Single = 1.0
-	'color As UInteger
-End Type
-
+	
 
 Type CLIENT_NODE
 	name As String = ""
@@ -40,11 +33,15 @@ Type CLIENT_NODE
 	y As UByte
 	hp As Single = 100
 	maxhp As Single = 100
-	gun As Weapon
+	gun As WeaponFwd Ptr = 0
+	energy As Single = 100
+	maxEne As Single = 100
 	nextPl As CLIENT_NODE Ptr
 	curGame As GameFwd Ptr
 	Declare Sub send(msg As String)
 	Declare Function takeDmg(amount As Single) As UByte
+	Declare Function getCond() As Ubyte
+	Declare Function getEne() As Ubyte
 End Type
 	Sub CLIENT_NODE.send(msg As String)
 		'this.cnx->put(1)
@@ -55,6 +52,15 @@ End Type
 		If this.hp > 0 Then Return Int(this.hp/this.maxhp *100)
 		Return 0
 	End Function
+	Function CLIENT_NODE.getCond() As UByte
+		'Return Int(this.hp/this.maxhp *100)
+		Return Int(this.hp)
+	End Function
+	Function CLIENT_NODE.getEne() As UByte
+		'Return Int(this.ene/this.maxEne *100)
+		Return Int(this.energy)
+	End Function
+
 
 Dim Shared As CLIENT_NODE Ptr firstCli = 0, lastCli = 0
 Dim Shared As Integer clients = 0, regCount = 0
@@ -67,6 +73,7 @@ Dim Shared lock_players As Any Ptr : lock_players = MutexCreate()
 Dim Shared lock_output  As Any Ptr : lock_output  = MutexCreate()
 
 Dim Shared As Byte serverShutdown = 0
+
 
 Const maxPlayers = 8
 
@@ -100,13 +107,16 @@ End Type
 	Function Game.AddPlayer(cli As CLIENT_NODE Ptr) As UByte
 		MutexLock(this.lock_pl)
 		For i As Integer = 1 To this.plLimit
+		'ServerOutput "Iterating for open player slot... "&Str(i)
 			If this.players(i) = 0 Then
+			'ServerOutput "found"
 				this.players(i) = cli
 				cli->id = i
 				cli->x = 10
 				cli->y = 10
 				cli->curGame = @this
 				this.plCount += 1
+				'ServerOutput "ready to return"
 				MutexUnLock(this.lock_pl)
 				Return i
 			EndIf
@@ -128,7 +138,7 @@ End Type
 		newBlast->nextNode = this.firstBlast
 		this.firstBlast = newBlast
 		newBlast->startTime = Timer
-		this.sendToAll(Chr(protocol.newBlastWave, newBlast->x, newBlast->y, newBlast->energy, encSpd(newBlast->speed)))
+		this.sendToAll(Chr(protocol.newBlastWave, newBlast->x, newBlast->y, newBlast->energy, newBlast->energyUsage, newBlast->speed))
 	End Sub
 	Sub Game.updateLogic()
 		Dim As BlastWave Ptr curBlast = firstBlast, prevBlast = 0
@@ -136,11 +146,11 @@ End Type
 			Var dist = ((Timer - curBlast->startTime) * curBlast->speed)
 			Var ene = curBlast->energy - (dist * curBlast->energyUsage)
 			If ene >= 1 Then
-				For i As Integer = 1 to maxPlayers
+				For i As Integer = 1 to this.plLimit
 					If this.players(i) <> 0 AndAlso Int(Distance(curBlast->x, curBlast->y, _
 						this.players(i)->x, this.players(i)->y)) = dist Then
 							Var temp = this.players(i)->takeDmg(ene * curBlast->dmgMult)
-							this.sendToAll(Chr(protocol.updateStatus, players(i)->id, temp))
+							'this.sendToAll(Chr(protocol.updateStatus, players(i)->id, temp))
 					EndIf
 				Next i
 				prevBlast = curBlast
@@ -160,28 +170,60 @@ Dim Shared games(1 To numGames) As Game Ptr
 
 
 
+Type Weapon
+	energy		As Single = 10
+	maxEnergy	As Single = 50
+	energyUsage	As Single = 10.0
+	dmgMult		As Single = 1.0
+	speed		As Single = 4.0
+	recharge	As Single = 10.0
+	'color As UInteger
+	'Declare Constructor ()
+	Declare Sub Shoot(shooter As ClientFwd Ptr)
+End Type
+	'Constructor Weapon()
+	'End Constructor
+	Sub Weapon.Shoot(shooter As ClientFwd Ptr)
+		Var newBlast = new BlastWave
+		newBlast->x = shooter->x
+		newBlast->y = shooter->y
+		newBlast->energy = min(this.maxEnergy, shooter->energy)
+			shooter->energy -= newBlast->energy
+		newBlast->energyUsage = this.energyUsage
+		newBlast->dmgMult = this.dmgMult
+		newBlast->speed = this.speed
+		shooter->curGame->addBlastWave(newBlast)
+	End Sub
+
+
+
 Sub GameThread(curGame As Game Ptr)
 	Dim statusTimer As DelayTimer = DelayTimer(0.5)
 	Dim blastTimer As DelayTimer = DelayTimer(0.04)
 	Dim i As Integer
+	Dim pl As CLIENT_NODE Ptr
 	Do Until serverShutdown <> 0
 		
 		If statusTimer.hasExpired Then
-			For i As Integer = 1 to maxPlayers
-				If curGame->players(i) <> 0 Then _
-					curGame->players(i)->send(Chr(protocol.updateStatus, i, curGame->players(i)->takeDmg(0), 100))
+			For i As Integer = 1 to curGame->plLimit
+				pl = curGame->players(i)				
+				If pl <> 0 Then
+					pl->energy += pl->gun->recharge'/2.0
+					If pl->energy > pl->maxEne Then pl->energy = pl->maxEne
+					pl->send(Chr(protocol.updateStatus, i, pl->getCond(), pl->getEne()))
+				EndIf
 			Next i
 			statusTimer.start
 		EndIf
 		
 		If blastTimer.hasExpired Then
-		
+			curGame->updateLogic
 			blastTimer.start
 		Else
-			Sleep 4
+			Sleep 4,1
 		EndIf
 		
-		Sleep 1
+		Sleep 1,1
 	Loop
 End Sub
 

@@ -14,7 +14,7 @@
 '' < updatePos			P,ID,x,y
 '' < updateStatus		P,ID,cond,gun_energy
 '' > newBlastWave		P
-'' < newBlastWave		P,x,y
+'' < newBlastWave		P,x,y,ene,eneUsage,spd
 
 
 Enum protocol

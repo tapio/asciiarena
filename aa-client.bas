@@ -116,7 +116,7 @@ Sleep 500
 my_name =  Chr(Rand(63, 75)) +  Chr(Rand(63, 75))
 sock.put(1) : sock.put(Chr(protocol.introduce) & my_name)
 Print "Name sent"
-
+Sleep 500
 '*** Here be selection of game ***'
 
 Print "Requesting to join a game..."
@@ -214,6 +214,9 @@ Loop
 					Case protocol.newBlastWave
 						Var newWave = New BlastWave(Asc(Mid(traffic_in,2,1)),Asc(Mid(traffic_in,3,1)))
 						newWave->startTime = Timer
+						newWave->energy = Asc(Mid(traffic_in,4,1))
+						newWave->energyUsage = Asc(Mid(traffic_in,5,1))
+						newWave->speed = Asc(Mid(traffic_in,6,1))
 						newWave->nextNode = firstBlast
 						firstBlast = newWave
 					Case protocol.updatePos
@@ -295,7 +298,7 @@ Loop
 		Draw String (8*12, 8*1), "Condition:", RGB(128,128,128)
 		DrawAsciiBar(12, 2, 30, players(my_id).cond, 100, RGB(255,0,0), RGB(0,255,0),   Chr(177))
 		Draw String (8*12, 8*3), "Charge:", RGB(128,128,128)
-		DrawAsciiBar(12, 4, 30, players(my_id).ene,  100, RGB(0,0,255), RGB(255,0,255), Chr(178))
+		DrawAsciiBar(12, 4, 30, players(my_id).ene,  100, RGB(0,0,255), RGB(255,0,255), Chr(177))
 
 		PrintMessages 10, 20, 8
 		

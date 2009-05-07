@@ -13,10 +13,12 @@ WindowTitle "AsciiArena Server"
 #Include Once "chisock/chisock.bi"
 Using chi
 #Include Once "protocol.bi"
-#Include Once "server-logic.bas"
 
 Declare Sub ServerOutput(_st As String)
+#Include Once "server-logic.bas"
+
 Declare Sub ServerThread( curCli As CLIENT_NODE Ptr)
+
 
 
 Sub accept_thread( Byval s As socket Ptr )
@@ -38,6 +40,7 @@ Sub accept_thread( Byval s As socket Ptr )
 					If lastCli <> 0 Then lastCli->nextPl = new_cli
 					lastCli = new_cli
 					lastCli->cnx->put(Chr(protocol.message) & "Connection to server established")
+					lastCli->gun = New Weapon
 					lastCli->thread = ThreadCreate( Cast(Sub(ByVal As Any Ptr), @ServerThread), lastCli )
 				'EndIf
 			'EndIf
@@ -106,14 +109,17 @@ End
 Sub ServerThread( curCli As CLIENT_NODE Ptr )
 	Dim As Integer h = 0, i = 0, j = 0
 	Dim As String msg = "", tempst = ""
+	Var moveTimer = DelayTimer(0.05)
 	Do Until curCli->cnx->is_closed() Or serverShutdown <> 0
 		'process incoming data
 		If( curCli->cnx->get( h ) ) Then 
 		If( curCli->cnx->get( msg , 1, socket.block ) ) Then
+		'ServerOutput Str(curCli->curGame)
 		If curCli->curGame <> 0 Then
 			Select Case Asc(Left(msg,1))
 				Case protocol.updatePos
 					'ServerOutput "Movement: "+Str(Asc(Mid(msg,2)))
+					If moveTimer.hasExpired Then
 					i = curCli->x
 					j = curCli->y
 					Select Case Asc(Mid(msg,2))
@@ -126,8 +132,15 @@ Sub ServerThread( curCli As CLIENT_NODE Ptr )
 						curCli->x = i : curCli->y = j
 						curCli->curGame->sendToAll(Chr(protocol.updatePos, curCli->id, i, j))
 					EndIf
+					moveTimer.start
+					EndIf
 				Case protocol.newBlastWave
-					curCli->curGame->sendToAll(Chr(protocol.newBlastWave, curCli->x, curCli->y))
+					If curCli->getEne() > curCli->gun->energy Then
+						'curCli->curGame->sendToAll(Chr(protocol.newBlastWave, curCli->x, curCli->y))
+						'Var newBlast = new BlastWave
+						'curCli->curGame->addBlastWave(newBlast)
+						curCli->gun->shoot(curCli)
+					EndIf
 				Case protocol.message
 					curCli->curGame->sendToAll(Mid(msg,2))
 					ServerOutput("MSG>"&Mid(msg,2))
@@ -136,6 +149,7 @@ Sub ServerThread( curCli As CLIENT_NODE Ptr )
 		' Starting stuff
 		Else
 			h = Asc(Left(msg,1))
+			'ServerOutput msg
 			If curCli->name = "" Then
 				If h = protocol.introduce Then
 					curCli->name = Mid(msg,2)
