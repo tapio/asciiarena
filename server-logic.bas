@@ -1,4 +1,6 @@
 
+Type GameFwd As Game 
+
 Function Distance(x1 As Integer, y1 As Integer, x2 As Integer, y2 As Integer) As Single
 	Return Sqr( CSng((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1)) )
 End Function 
@@ -40,7 +42,7 @@ Type CLIENT_NODE
 	maxhp As Single = 100
 	gun As Weapon
 	nextPl As CLIENT_NODE Ptr
-	gameId As UByte
+	curGame As GameFwd Ptr
 	Declare Sub send(msg As String)
 	Declare Function takeDmg(amount As Single) As UByte
 End Type
@@ -67,7 +69,6 @@ Dim Shared lock_output  As Any Ptr : lock_output  = MutexCreate()
 Dim Shared As Byte serverShutdown = 0
 
 Const maxPlayers = 8
-Type GameFwd As Game 
 
 Type Game
 	title As String
@@ -103,7 +104,7 @@ End Type
 				cli->id = i
 				cli->x = 10
 				cli->y = 10
-				cli->gameId = this.id
+				cli->curGame = @this
 				this.plCount += 1
 				MutexUnLock(this.lock_pl)
 				Return i
@@ -154,13 +155,18 @@ End Type
 	
 
 Dim Shared As Integer numGames = 0
-Dim Shared games(1 To numGames) As Game
+Dim Shared games(1 To numGames) As Game Ptr
 
+
+
+Sub GameThread(curGame As Any Ptr)
+
+End Sub
 
 
 
 Sub DeletePlayer(pl As CLIENT_NODE Ptr)
-	If pl->gameid <> 0 Then games(pl->gameid).removePlayer(pl->id)
+	If pl->curGame <> 0 Then pl->curGame->removePlayer(pl->id)
 	'RemoveFromArea(pl, pl->actArea)
 	'MutexLock(lock_players)
 	'If pl = firstCli Then firstCli = pl->nextPl
@@ -177,12 +183,12 @@ End Sub
 Sub CreateGame(title As String, map As String)
 	numGames += 1
 	ReDim Preserve games(1 To numGames)
-	games(numGames) = Game(title)
-	games(numGames).id = numGames
+	games(numGames) = New Game(title)
+	games(numGames)->id = numGames
 	For j As Integer = 1 To mapHeight
 		For i As Integer = 1 To mapWidth
-			If rnd > .8 Then games(numGames).map(i,j) = Asc("#") Else games(numGames).map(i,j) = Asc(" ")
-			If i=1 Or j=1 Or i=mapWidth Or j=mapHeight Then games(numGames).map(i,j) = Asc("#")
+			If rnd > .8 Then games(numGames)->map(i,j) = Asc("#") Else games(numGames)->map(i,j) = Asc(" ")
+			If i=1 Or j=1 Or i=mapWidth Or j=mapHeight Then games(numGames)->map(i,j) = Asc("#")
 		Next i
 	Next j
 End Sub

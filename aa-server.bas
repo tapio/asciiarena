@@ -17,7 +17,6 @@ Using chi
 
 Declare Sub ServerOutput(_st As String)
 Declare Sub ServerThread( curCli As CLIENT_NODE Ptr)
-Declare Sub BlastManagement(firstBlast As BlastWave Ptr)
 
 
 Sub accept_thread( Byval s As socket Ptr )
@@ -111,8 +110,7 @@ Sub ServerThread( curCli As CLIENT_NODE Ptr )
 		'process incoming data
 		If( curCli->cnx->get( h ) ) Then 
 		If( curCli->cnx->get( msg , 1, socket.block ) ) Then
-		If curCli->gameId <> 0 Then
-					'ServerOutput "Something came"
+		If curCli->curGame <> 0 Then
 			Select Case Asc(Left(msg,1))
 				Case protocol.updatePos
 					'ServerOutput "Movement: "+Str(Asc(Mid(msg,2)))
@@ -124,14 +122,14 @@ Sub ServerThread( curCli As CLIENT_NODE Ptr )
 						Case actions.south : j += 1
 						Case actions.west  : i -= 1
 					End Select
-					If games(curCli->gameId).map(i,j) = Asc(" ") Then
+					If curCli->curGame->map(i,j) = Asc(" ") Then
 						curCli->x = i : curCli->y = j
-						games(curCli->gameId).sendToAll(Chr(protocol.updatePos, curCli->id, i, j))
+						curCli->curGame->sendToAll(Chr(protocol.updatePos, curCli->id, i, j))
 					EndIf
 				Case protocol.newBlastWave
-					games(curCli->gameId).sendToAll(Chr(protocol.newBlastWave, curCli->x, curCli->y))
+					curCli->curGame->sendToAll(Chr(protocol.newBlastWave, curCli->x, curCli->y))
 				Case protocol.message
-					games(curCli->gameId).sendToAll(Mid(msg,2))
+					curCli->curGame->sendToAll(Mid(msg,2))
 					ServerOutput("MSG>"&Mid(msg,2))
 			End Select
 			
@@ -145,21 +143,21 @@ Sub ServerThread( curCli As CLIENT_NODE Ptr )
 				EndIf
 			ElseIf h = protocol.join Then
 				ServerOutput "Join request detected"
-				curCli->id = games(1).addPlayer(curCli)
-				ServerOutput "Assigned " & curCli->name & " to id " & Str(curCli->id) & " and game " & Str(curCli->gameid)
+				curCli->id = games(1)->addPlayer(curCli)
+				ServerOutput "Assigned " & curCli->name & " to id " & Str(curCli->id) & " and game " & Str(curCli->curGame->id)
 				ServerOutput "Sending map"
 				For j = 1 To mapHeight
 					tempst = ""
 					For i = 1 To mapWidth
-						tempst += Chr(games(curCli->gameid).map(i,j))
+						tempst += Chr(curCli->curGame->map(i,j))
 					Next i
 					curCli->send(Chr(protocol.mapData, j)+tempst)
 				Next j
 				ServerOutput "Sending introductions"
-				games(curCli->gameid).sendToAll(Chr(protocol.introduce, curCli->id, curCli->x, curCli->y) & curCli->name)
+				curCli->curGame->sendToAll(Chr(protocol.introduce, curCli->id, curCli->x, curCli->y) & curCli->name)
 				For i = 1 To maxPlayers
-					If games(curCli->gameid).players(i) <> 0 AndAlso games(curCli->gameid).players(i) <> curCli Then
-						curCli->send(Chr(protocol.introduce, games(curCli->gameid).players(i)->id, games(curCli->gameid).players(i)->x, games(curCli->gameid).players(i)->y) & games(curCli->gameid).players(i)->name)
+					If curCli->curGame->players(i) <> 0 AndAlso curCli->curGame->players(i) <> curCli Then
+						curCli->send(Chr(protocol.introduce, curCli->curGame->players(i)->id, curCli->curGame->players(i)->x, curCli->curGame->players(i)->y) & curCli->curGame->players(i)->name)
 					EndIf
 				Next i
 
@@ -169,7 +167,7 @@ Sub ServerThread( curCli As CLIENT_NODE Ptr )
 		EndIf
 		Sleep 5,1
 	Loop
-	If curCli->gameId <> 0 Then games(curCli->gameId).sendToAll(Chr(protocol.updateStatus, curCli->id))
+	If curCli->curGame <> 0 Then curCli->curGame->sendToAll(Chr(protocol.updateStatus, curCli->id))
 	If serverShutdown <> 0 And (Not curCli->cnx->is_closed()) Then curCli->cnx->put(Chr(protocol.message) & "SERVER: Server is shutting down...")
 	curCli->cnx->close()
 	ServerOutput "Connection to " & curCli->name & " terminated"
