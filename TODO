@@ -16,18 +16,20 @@ LAST UPDATE: 2009-04-28
 	[X] Others can see movement
 	[X] Collisions with map
 	[ ] Collisions with other players
-	[ ] Line-of-Sight
+	[ ] Server side Line-of-Sight
+	[ ] Client side Line-of-Sight
 
 [ ] Weapon
 	[X] Client sends command
 	[X] Server data structures
-	[ ] Server side handling
-	[ ] Collision detection / effects
-	[+] Clien data structures
-	[ ] Client side display
+	[X] Server side handling
+	[X] Collision detection / effects
+	[X] Clien data structures
+	[X] Client side display
+	[ ] Refinement
 
 [ ] Selecting and joining a game
-	[ ] Server sends available games
+	[X] Server sends available games
 	[ ] Client displays them and allows for choice
 	[X] Actual joining
 	[ ] Error handling (e.g. full)
@@ -35,4 +37,7 @@ LAST UPDATE: 2009-04-28
 [ ] Match
 	[ ] Frags
 	[ ] Game types
+		[ ] DM
+		[ ] TDM
+		[ ] ASSAULT
 

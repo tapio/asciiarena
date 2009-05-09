@@ -116,7 +116,7 @@ End Type
 		MutexUnLock(this.lock_pl)
 	End Sub
 	Operator Game.Cast() As String
-		Return Str(this.id)+" - "+this.title+" - "+Str(this.plCount)+"/"+Str(this.plLimit)
+		Return Str(this.id)+" - "+this.title+" - Players: "+Str(this.plCount)+"/"+Str(this.plLimit)+" - Map: <generated>"
 	End Operator
 	Sub Game.addBlastWave(newBlast As BlastWave Ptr)
 		newBlast->nextNode = this.firstBlast
@@ -126,21 +126,31 @@ End Type
 	End Sub
 	Sub Game.updateLogic()
 		Dim As BlastWave Ptr curBlast = firstBlast, prevBlast = 0
+		Dim As Integer xx, yy
 		While curBlast <> 0
 			Var dist = ((Timer - curBlast->startTime) * curBlast->speed)
 			Var ene = curBlast->energy - (dist * curBlast->energyUsage)
 			If ene >= 1 Then
 				If dist > 1 Then
-					For i As Integer = 1 to this.plLimit
-						'If this.players(i) <> 0 Then ServerOutput(Str(Int(Distance(curBlast->x, curBlast->y, _
-							'this.players(i)->x, this.players(i)->y)))& ":" & Str(dist))
-						If this.players(i) <> 0 AndAlso Int(Distance(curBlast->x, curBlast->y, _
-							this.players(i)->x, this.players(i)->y)) = Int(dist) Then
-								Var temp = this.players(i)->takeDmg(ene * curBlast->dmgMult)
-								'this.sendToAll(Chr(protocol.updateStatus, players(i)->id, temp))
-								ServerOutput "DMG"
+					For k As Integer = 1 to numBlastParticles
+						If curBlast->particles(k) = 0 Then
+							xx = curBlast->x + Cos((k-1)*blastAngle*DegToRad) * dist
+							yy = curBlast->y - Sin((k-1)*blastAngle*DegToRad) * dist
+							If xx<1 OrElse yy<1 OrElse xx > mapWidth OrElse yy > mapHeight OrElse map(xx,yy) <> 32 Then
+								curBlast->particles(k) = 1
+							Else
+								For i As Integer = 1 To this.plLimit
+									If this.players(i) <> 0 AndAlso this.players(i)->x = xx _ 
+										AndAlso this.players(i)->y = yy Then
+											Var temp = this.players(i)->takeDmg(ene * curBlast->dmgMult)
+											curBlast->particles(k) = 1
+											'this.sendToAll(Chr(protocol.updateStatus, players(i)->id, temp))
+											ServerOutput "DMG"
+									EndIf
+								Next i
+							EndIf
 						EndIf
-					Next i
+					Next k
 				EndIf
 				prevBlast = curBlast
 				curBlast = curBlast->nextNode

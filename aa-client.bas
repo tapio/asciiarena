@@ -178,12 +178,10 @@ Loop
 			Var dist = ((Timer - curBlast->startTime) * curBlast->speed)
 			Var ene = curBlast->energy - (dist * curBlast->energyUsage)
 			If ene >= 1 Then
-				'DrawASCIICircle(curBlast->x, curBlast->y, Int(dist), RGB(0,255,0))
 				For i = 1 To numBlastParticles
 					If curBlast->particles(i) = 0 Then
-						xx = curBlast->x + Cos((i-1)*blastAngle) * dist
-						yy = curBlast->y - Sin((i-1)*blastAngle) * dist
-						Print xx;yy
+						xx = curBlast->x + Cos((i-1)*blastAngle*DegToRad) * dist
+						yy = curBlast->y - Sin((i-1)*blastAngle*DegToRad) * dist
 						If xx>=1 AndAlso yy>=1 AndAlso xx <= mapWidth AndAlso yy <=mapHeight AndAlso map(xx,yy) = 32 Then
 							Draw String (viewStartX+8*xx,viewStartY+8*yy), "*", RGB(0,255,0)
 						Else

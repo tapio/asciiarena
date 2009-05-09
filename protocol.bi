@@ -80,7 +80,7 @@ Const timestep = 0.05
 
 '' Shared types ''
 
-Const numBlastParticles = 32
+Const numBlastParticles = 16
 Const blastAngle = 360.0/numBlastParticles
 Type BlastWave
 	x			As UByte

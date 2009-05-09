@@ -155,26 +155,37 @@ Sub ServerThread( curCli As CLIENT_NODE Ptr )
 					curCli->name = Mid(msg,2)
 					ServerOutput "Connection " & Str(*(curCli->cnx->connection_info())) & " identified as " & curCli->name
 				EndIf
-			ElseIf h = protocol.join Then
-				ServerOutput "Join request detected"
-				curCli->id = games(1)->addPlayer(curCli)
-				ServerOutput "Assigned " & curCli->name & " to id " & Str(curCli->id) & " and game " & Str(curCli->curGame->id)
-				ServerOutput "Sending map"
-				For j = 1 To mapHeight
-					tempst = ""
-					For i = 1 To mapWidth
-						tempst += Chr(curCli->curGame->map(i,j))
-					Next i
-					curCli->send(Chr(protocol.mapData, j)+tempst)
-				Next j
-				ServerOutput "Sending introductions"
-				curCli->curGame->sendToAll(Chr(protocol.introduce, curCli->id, curCli->x, curCli->y) & curCli->name)
-				For i = 1 To maxPlayers
-					If curCli->curGame->players(i) <> 0 AndAlso curCli->curGame->players(i) <> curCli Then
-						curCli->send(Chr(protocol.introduce, curCli->curGame->players(i)->id, curCli->curGame->players(i)->x, curCli->curGame->players(i)->y) & curCli->curGame->players(i)->name)
+			ElseIf h = protocol.gameInfo Then
+				ServerOutput "Sending game list"
+				For i = 1 To numGames
+					If games(i) <> 0 Then
+						curCLi->send(Chr(protocol.gameInfo)+Str(*games(i)))
+						Sleep 10,1
 					EndIf
 				Next i
-
+			ElseIf h = protocol.join Then
+				ServerOutput "Join request detected"
+				h = Asc(Mid(msg,2,1))
+				If h > 0 AndAlso h <= numGames AndAlso games(numGames) <> 0 Then _
+					curCli->id = games(h)->addPlayer(curCli)
+				If curCli-> id <> 0 Then 
+					ServerOutput "Assigned " & curCli->name & " to id " & Str(curCli->id) & " and game " & Str(curCli->curGame->id)
+					ServerOutput "Sending map"
+					For j = 1 To mapHeight
+						tempst = ""
+						For i = 1 To mapWidth
+							tempst += Chr(curCli->curGame->map(i,j))
+						Next i
+						curCli->send(Chr(protocol.mapData, j)+tempst)
+					Next j
+					ServerOutput "Sending introductions"
+					curCli->curGame->sendToAll(Chr(protocol.introduce, curCli->id, curCli->x, curCli->y) & curCli->name)
+					For i = 1 To maxPlayers
+						If curCli->curGame->players(i) <> 0 AndAlso curCli->curGame->players(i) <> curCli Then
+							curCli->send(Chr(protocol.introduce, curCli->curGame->players(i)->id, curCli->curGame->players(i)->x, curCli->curGame->players(i)->y) & curCli->curGame->players(i)->name)
+						EndIf
+					Next i
+				EndIf
 			EndIf
 		EndIf
 		EndIf
