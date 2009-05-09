@@ -76,3 +76,26 @@ Const timestep = 0.05
 
 #Define encSpd(s) (CUByte(s*16.0))
 #Define decSpd(b) (CSng(b)/16.0)
+
+
+'' Shared types ''
+
+Const numBlastParticles = 32
+Const blastAngle = 360.0/numBlastParticles
+Type BlastWave
+	x			As UByte
+	y			As UByte
+	energy		As Single = 10
+	energyUsage	As Single = 1.0
+	speed		As Single = 5.0
+	dmgMult		As Single = 1.0
+	startTime	As Double
+	particles(1 To numBlastParticles) As UByte
+	nextNode	As BlastWave Ptr
+	'color As UInteger
+	Declare Constructor(x As UByte = 0, y As UByte = 0)
+End Type
+    Constructor BlastWave(x As UByte = 0, y As UByte = 0)
+        this.x   = x
+        this.y   = y
+    End Constructor

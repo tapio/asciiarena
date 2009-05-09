@@ -46,21 +46,7 @@ Dim map(1 To mapWidth,1 To mapHeight) As UByte
 #Define char_lander   Chr(227)
 #Define char_walking  "@"
 
-Type BlastWave
-	x			As UByte
-	y			As UByte
-	energy		As Single = 10
-	energyUsage	As Single = 1.0
-	speed		As Single = 5.0
-	startTime	As Double
-	nextNode	As BlastWave Ptr
-	'color As UInteger
-	Declare Constructor(x As UByte = 0, y As UByte = 0)
-End Type
-    Constructor BlastWave(x As UByte = 0, y As UByte = 0)
-        this.x   = x
-        this.y   = y
-    End Constructor
+
 
 Dim firstBlast As BlastWave Ptr = 0
 
@@ -152,7 +138,7 @@ Loop
 	Dim Shared As Byte consoleOpen = 0
 	Dim As UByte tempid, tempx, tempy, move_dir
 	Dim As Byte helpscreen = 0, fire = 0
-
+	Dim As Integer xx,yy
 
 
     ' ------- MAIN LOOP ------- '
@@ -192,7 +178,20 @@ Loop
 			Var dist = ((Timer - curBlast->startTime) * curBlast->speed)
 			Var ene = curBlast->energy - (dist * curBlast->energyUsage)
 			If ene >= 1 Then
-				DrawASCIICircle(curBlast->x, curBlast->y, Int(dist), RGB(0,255,0))
+				'DrawASCIICircle(curBlast->x, curBlast->y, Int(dist), RGB(0,255,0))
+				For i = 1 To numBlastParticles
+					If curBlast->particles(i) = 0 Then
+						xx = curBlast->x + Cos((i-1)*blastAngle) * dist
+						yy = curBlast->y - Sin((i-1)*blastAngle) * dist
+						Print xx;yy
+						If xx>=1 AndAlso yy>=1 AndAlso xx <= mapWidth AndAlso yy <=mapHeight AndAlso map(xx,yy) = 32 Then
+							Draw String (viewStartX+8*xx,viewStartY+8*yy), "*", RGB(0,255,0)
+						Else
+							curBlast->particles(i) = 1
+						EndIf
+					EndIf
+				Next i
+				
 				prevBlast = curBlast
 				curBlast = curBlast->nextNode
 			Else

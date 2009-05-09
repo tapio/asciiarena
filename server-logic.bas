@@ -4,20 +4,7 @@ Type ClientFwd As CLIENT_NODE
 Type WeaponFwd As Weapon
 
 
-Type BlastWave
-	x			As UByte
-	y			As UByte
-	energy		As Single = 10
-	energyUsage	As Single = 1.0
-	dmgMult		As Single = 1.0
-	speed		As Single = 2.0
-	startTime	As Double
-	nextNode	As BlastWave Ptr
-	'color As UInteger
-	'Declare Constructor (x As UByte, y As UByte, energy As Single)
-End Type
 
-	
 
 Type CLIENT_NODE
 	name As String = ""
