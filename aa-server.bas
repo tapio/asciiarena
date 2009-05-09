@@ -1,4 +1,4 @@
-Const VERSION = "0.1.0"
+Const VERSION = "0.2.0"
 WindowTitle "AsciiArena Server"
 
 #Ifdef __FBWIN32__

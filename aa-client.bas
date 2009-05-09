@@ -1,6 +1,6 @@
 ' Ascii Arena
 
-Const VERSION = "0.1.0"
+Const VERSION = "0.2.0"
 
 #Define NETWORK_enabled
 
