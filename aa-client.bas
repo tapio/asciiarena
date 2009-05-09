@@ -1,4 +1,7 @@
-' Ascii Arena
+'' Ascii Arena Client
+'' (c) Tapio Vierros 2009
+'' License: Creative Commons Attribution 3.0
+'' 			http://creativecommons.org/licenses/by/3.0/
 
 Const VERSION = "0.2.0"
 

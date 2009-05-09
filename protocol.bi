@@ -1,3 +1,9 @@
+'' Ascii Arena
+'' (c) Tapio Vierros 2009
+'' License: Creative Commons Attribution 3.0
+'' 			http://creativecommons.org/licenses/by/3.0/
+
+
 
 '' PROTOCOLS
 '' > to server

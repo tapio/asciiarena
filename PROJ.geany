@@ -14,10 +14,4 @@ description=
 run_cmd=
 
 [files]
-current_page=5
-FILE_NAME_0=5261;FreeBasic;0;16;1;1;0;/home/tapio/FreeBASIC Projects/AsciiArena/aa-client.bas;0
-FILE_NAME_1=1348;FreeBasic;0;16;1;1;0;/home/tapio/FreeBASIC Projects/AsciiArena/protocol.bi;0
-FILE_NAME_2=1974;FreeBasic;0;0;1;1;0;/home/tapio/FreeBASIC Projects/AsciiArena/aa-server.bas;0
-FILE_NAME_3=4161;FreeBasic;0;16;1;1;0;/home/tapio/FreeBASIC Projects/AsciiArena/server-logic.bas;0
-FILE_NAME_4=2300;FreeBasic;0;16;1;1;0;/usr/local/include/freebasic/util.bas;0
-FILE_NAME_5=1122;PHP;0;16;1;1;0;/home/tapio/.gvfs/ftp käyttäjälle tapio palvelimella saluuna.dy.fi/var/www/mökki/content/main.php;0
+current_page=-1
