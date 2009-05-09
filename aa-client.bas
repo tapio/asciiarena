@@ -46,6 +46,8 @@ Dim map(1 To mapWidth,1 To mapHeight) As UByte
 #Define char_lander   Chr(227)
 #Define char_walking  "@"
 
+Const maxMsg = 16
+ReDim Shared messageBuffer(1 To maxMsg) As String
 
 
 Dim firstBlast As BlastWave Ptr = 0
@@ -98,31 +100,44 @@ Print "Connecting to " & serveraddress & ":" & Str(port)
 Var res = sock.client( serveraddress, port )
 If( res ) Then Print translate_error(res): Sleep: End
 
-Sleep 500
+Sleep 200
 my_name =  Chr(Rand(63, 75)) +  Chr(Rand(63, 75))
 sock.put(1) : sock.put(Chr(protocol.introduce) & my_name)
-Print "Name sent"
-Sleep 500
-'*** Here be selection of game ***'
+Print "Name sent, requesting game list..."
+Sleep 200
+sock.put(1) : sock.put(Chr(protocol.gameInfo))
 
-Print "Requesting to join a game..."
-sock.put(1) : sock.put(Chr(protocol.join, 1) )
+Cls
+'Print "Requesting to join a game..."
+'sock.put(1) : sock.put(Chr(protocol.join, 1) )
 
 Do
+	ScreenSet workpage, workpage Xor 1
+	Cls
+
+	PrintMessages 8, 24, maxMsg
+	
 	sock.get(traffic_in)
 	If Asc(Left(traffic_in,1)) = protocol.introduce And Mid(traffic_in,5) = my_name Then
 		my_id = Asc(Mid(traffic_in,2,1))
 		AddPlayer(Mid(traffic_in,2))
 		Exit Do
+	ElseIf Asc(Left(traffic_in,1)) = protocol.gameInfo Then
+		AddMsg(Mid(traffic_in,2))
+		traffic_in = ""
 	ElseIf Asc(Left(traffic_in,1)) = protocol.mapData Then
 		tempst = Mid(traffic_in, 3)
 		j = Asc(Mid(traffic_in, 2, 1))
 		For i = 1 To Len(tempst)
 			map(i,j) = Asc(Mid(tempst,i,1))
 		Next i
+		traffic_in = ""
 	EndIf
 	k = InKey
 	If k = Chr(27) Or k = Chr(255) & "k" Then End
+	traffic_out = GameInput("Enter the number of game you want to join: ", 8, 8, traffic_out, k)
+	If k = Chr(13) Then sock.put(1) : sock.put(Chr(protocol.join, CInt(traffic_out)) )
+	switch(workpage)
 	Sleep 10
 Loop
 'print my_id
@@ -139,7 +154,7 @@ Loop
 	Dim As UByte tempid, tempx, tempy, move_dir
 	Dim As Byte helpscreen = 0, fire = 0
 	Dim As Integer xx,yy
-
+	ReDim messageBuffer(1 To maxMsg) As String
 
     ' ------- MAIN LOOP ------- '
     Do
@@ -339,8 +354,6 @@ Sub AddPlayer(plrow As String)
 End Sub
 
 
-Const maxMsg = 10
-Dim Shared messageBuffer(1 To maxMsg) As String
 Sub AddMsg(_msg As String)
 	For i As Integer = maxMsg To 2 Step -1
 		messageBuffer(i) = messageBuffer(i-1)
