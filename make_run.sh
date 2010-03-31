@@ -2,8 +2,8 @@
 
 pkill aa-server
 
-fbc -w all "aa-server.bas"
-fbc -w all "aa-client.bas"
+fbc -w all -exx -g -mt "aa-server.bas"
+fbc -w all -exx -g -mt "aa-client.bas"
 
 ./aa-server &
 wait 1000
