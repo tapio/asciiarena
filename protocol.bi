@@ -101,7 +101,7 @@ Type BlastWave
 	'color As UInteger
 	Declare Constructor(x As UByte = 0, y As UByte = 0)
 End Type
-    Constructor BlastWave(x As UByte = 0, y As UByte = 0)
-        this.x   = x
-        this.y   = y
-    End Constructor
+	Constructor BlastWave(x As UByte = 0, y As UByte = 0)
+		this.x   = x
+		this.y   = y
+	End Constructor

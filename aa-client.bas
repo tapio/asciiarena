@@ -57,18 +57,18 @@ Dim firstBlast As BlastWave Ptr = 0
 
 
 Type Player
-	id 	 As UByte
+	id   As UByte
 	name As String
 	x    As UByte
 	y    As UByte
 	cond As UByte = 100
 	ene  As UByte = 50
-    Declare Constructor(x As UByte = 0, y As UByte = 0)
+	Declare Constructor(x As UByte = 0, y As UByte = 0)
 End Type
-    Constructor Player(x As UByte = 0, y As UByte = 0)
-        this.x   = x
-        this.y   = y
-    End Constructor
+	Constructor Player(x As UByte = 0, y As UByte = 0)
+		this.x   = x
+		this.y   = y
+	End Constructor
 
 
 Dim Shared maxPlayers As Integer = 32
@@ -147,10 +147,10 @@ Loop
 'print players(my_id).name
 'sleep
 
-    Dim gameTimer As FrameTimer
-    Dim trafficTimer As DelayTimer = DelayTimer(0.05)
+	Dim gameTimer As FrameTimer
+	Dim trafficTimer As DelayTimer = DelayTimer(0.05)
 	Dim moveTimer As DelayTimer = DelayTimer(0.01)
-    Dim keyTimer As DelayTimer = DelayTimer(0.5)
+	Dim keyTimer As DelayTimer = DelayTimer(0.5)
 
 	Dim Shared As Byte moveStyle = 0, hasMoved = 0, hasMovedOnline = 0
 	Dim Shared As Byte consoleOpen = 0
@@ -159,25 +159,25 @@ Loop
 	Dim As Integer xx,yy
 	ReDim messageBuffer(1 To maxMsg) As String
 
-    ' ------- MAIN LOOP ------- '
-    Do
-        gameTimer.Update
-        ScreenSet workpage, workpage Xor 1
-        Cls
+	' ------- MAIN LOOP ------- '
+	Do
+		gameTimer.Update
+		ScreenSet workpage, workpage Xor 1
+		Cls
 
-        'If consoleOpen = 0 Then Keys pl, tileBuf
-        If moveTimer.hasExpired And Not consoleOpen Then
-			If MultiKey(KEY_UP)    Then move_dir = actions.north
-	        If MultiKey(KEY_DOWN)  Then move_dir = actions.south
-	        If MultiKey(KEY_LEFT)  Then move_dir = actions.west
-	        If MultiKey(KEY_RIGHT) Then move_dir = actions.east
+		'If consoleOpen = 0 Then Keys pl, tileBuf
+		If moveTimer.hasExpired And Not consoleOpen Then
+			If MultiKey(KEY_UP)	Then move_dir = actions.north
+			If MultiKey(KEY_DOWN)  Then move_dir = actions.south
+			If MultiKey(KEY_LEFT)  Then move_dir = actions.west
+			If MultiKey(KEY_RIGHT) Then move_dir = actions.east
 		EndIf
 		If keyTimer.hasExpired And Not consoleOpen Then
 			If MultiKey(KEY_SPACE) Then fire = TRUE: keyTimer.start
 		EndIf
 
 		'' Draw Map
-        For j = 1 To mapHeight
+		For j = 1 To mapHeight
 			For i = 1 to mapWidth
 				If map(i,j) <> 0 Then Draw String ( viewStartX+8*i, viewStartY+8*j ), Chr(map(i,j)), RGB(100,100,100)
 			Next i
@@ -304,12 +304,12 @@ Loop
 		EndIf
 
 
-        Locate 1,1: Color RGB(80,40,40)
-        Print "FPS:";gameTimer.getFPS
-        'Print "UniqueId:";GetStarId(pl.x,pl.y)
-        'Print "Players:";numPlayers
-        'Print traffic_in
-        'Print "Coords:";pl.x;pl.y
+		Locate 1,1: Color RGB(80,40,40)
+		Print "FPS:";gameTimer.getFPS
+		'Print "UniqueId:";GetStarId(pl.x,pl.y)
+		'Print "Players:";numPlayers
+		'Print traffic_in
+		'Print "Coords:";pl.x;pl.y
 		Draw String (8*12, 8*1), "Condition:", RGB(128,128,128)
 		DrawAsciiBar(12, 2, 30, players(my_id).cond, 100, RGB(255,0,0), RGB(0,255,0),   Chr(177))
 		Draw String (8*12, 8*3), "Charge:", RGB(128,128,128)
@@ -317,32 +317,32 @@ Loop
 
 		PrintMessages 10, 20, 8
 
-        k = InKey
+		k = InKey
 		If k = Chr(255,68) Then SavePNG("shots/shot"+Str(Int(Rnd*9000)+1000)+".png")': Sleep 1000
 		If k = "t" Or k = "T" Then consoleOpen = TRUE
-        If consoleOpen Then
-        	msg = GameInput("> ", viewStartX, scrH-16, msg, k)
-        	#Ifdef CLIPBOARD_enabled
-        		If MultiKey(KEY_CONTROL) And MultiKey(KEY_V) Then msg = msg & getClip():Sleep 500
-        		If MultiKey(KEY_CONTROL) And MultiKey(KEY_C) Then setClip(msg):Sleep 500
-        	#EndIf
-        	If MultiKey(KEY_ENTER) Then
-        		consoleOpen = FALSE
-        		'If msg = "/ping" Then serverQueries += queries.ping : msg = ""
-        		'If msg = "/info" Or msg = "/who" Or msg = "/count" Then serverQueries += queries.playerCount : msg = ""
-        	EndIf
-        EndIf
-        switch(workpage)
-        Sleep 2,1 'this hack reduces cpu usage in some cases
-    Loop Until k = Chr(27) Or k = Chr(255) & "k"
+		If consoleOpen Then
+			msg = GameInput("> ", viewStartX, scrH-16, msg, k)
+			#Ifdef CLIPBOARD_enabled
+				If MultiKey(KEY_CONTROL) And MultiKey(KEY_V) Then msg = msg & getClip():Sleep 500
+				If MultiKey(KEY_CONTROL) And MultiKey(KEY_C) Then setClip(msg):Sleep 500
+			#EndIf
+			If MultiKey(KEY_ENTER) Then
+				consoleOpen = FALSE
+				'If msg = "/ping" Then serverQueries += queries.ping : msg = ""
+				'If msg = "/info" Or msg = "/who" Or msg = "/count" Then serverQueries += queries.playerCount : msg = ""
+			EndIf
+		EndIf
+		switch(workpage)
+		Sleep 2,1 'this hack reduces cpu usage in some cases
+	Loop Until k = Chr(27) Or k = Chr(255) & "k"
 
-    sock.close()
-    End
+	sock.close()
+	End
 
 ''''''''''''''''''''''''''''
-'''                      '''
+'''					  '''
 '''   END OF MAIN LOOP   '''
-'''                      '''
+'''					  '''
 ''''''''''''''''''''''''''''
 
 
