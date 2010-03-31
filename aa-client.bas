@@ -8,10 +8,10 @@ Const VERSION = "0.2.0"
 #Define NETWORK_enabled
 
 #Include "PNGscreenshot.bas"
-#Include Once "def.bi"
-#Include Once "util.bas"
-#Include Once "words.bi"
-#Include Once "protocol.bi"
+#Include Once "miscfb/def.bi"
+#Include Once "miscfb/util.bas"
+#Include Once "miscfb/words.bi"
+#Include Once "miscfb/protocol.bi"
 '#Include "fbgfx.bi"
 
 Const scrW = 800
@@ -119,7 +119,7 @@ Do
 	Cls
 
 	PrintMessages 8, 24, maxMsg
-	
+
 	sock.get(traffic_in)
 	If Asc(Left(traffic_in,1)) = protocol.introduce And Mid(traffic_in,5) = my_name Then
 		my_id = Asc(Mid(traffic_in,2,1))
@@ -164,7 +164,7 @@ Loop
         gameTimer.Update
         ScreenSet workpage, workpage Xor 1
         Cls
-        
+
         'If consoleOpen = 0 Then Keys pl, tileBuf
         If moveTimer.hasExpired And Not consoleOpen Then
 			If MultiKey(KEY_UP)    Then move_dir = actions.north
@@ -175,7 +175,7 @@ Loop
 		If keyTimer.hasExpired And Not consoleOpen Then
 			If MultiKey(KEY_SPACE) Then fire = TRUE: keyTimer.start
 		EndIf
-		
+
 		'' Draw Map
         For j = 1 To mapHeight
 			For i = 1 to mapWidth
@@ -188,7 +188,7 @@ Loop
 			If players(i).id <> 0 Then _
 				Draw String ( viewStartX + 8*players(i).x, viewStartY + 8*players(i).y ), "@", RGB(200,100,100)
 		Next i
-		
+
 		'' Draw Blasts
 		Dim As BlastWave Ptr curBlast = firstBlast, prevBlast = 0
 		While curBlast <> 0
@@ -207,7 +207,7 @@ Loop
 						EndIf
 					EndIf
 				Next i
-				
+
 				prevBlast = curBlast
 				curBlast = curBlast->nextNode
 			Else
@@ -217,7 +217,7 @@ Loop
 				If prevBlast <> 0 Then curBlast = prevBlast->nextNode Else curBlast = 0
 			EndIf
 		Wend
-		
+
 		'' Networking
 		If sock.is_closed = FALSE Then
 			'' Process incoming
@@ -254,7 +254,7 @@ Loop
 								ScreenSet workpage, workpage Xor 1
 								Sleep 1500,1
 								Sleep
-								End 
+								End
 							EndIf
 						Else
 							players(tempid).ene = Asc(Mid(traffic_in,4,1))
@@ -262,9 +262,9 @@ Loop
 					Case protocol.message
 						AddMsg(Mid(traffic_in,2))
 				End Select
-		
+
 			End If
-			
+
 			'' Send out
 			If trafficTimer.hasExpired Then
 				If move_dir <> 0 Then
@@ -300,7 +300,7 @@ Loop
 			ScreenSet workpage, workpage Xor 1
 			Sleep 1500,1
 			Sleep
-			End 
+			End
 		EndIf
 
 
@@ -316,7 +316,7 @@ Loop
 		DrawAsciiBar(12, 4, 30, players(my_id).ene,  100, RGB(0,0,255), RGB(255,0,255), Chr(177))
 
 		PrintMessages 10, 20, 8
-		
+
         k = InKey
 		If k = Chr(255,68) Then SavePNG("shots/shot"+Str(Int(Rnd*9000)+1000)+".png")': Sleep 1000
 		If k = "t" Or k = "T" Then consoleOpen = TRUE
@@ -386,9 +386,9 @@ Function GameInput(promt As String = "", x As Integer, y As Integer, stri As Str
 	If Len(stri) > 0 Then
 		If j = 8 Then
 			stri = Left(stri,Len(stri)-1)
-		ElseIf MultiKey(KEY_BACKSPACE) Then	
+		ElseIf MultiKey(KEY_BACKSPACE) Then
 			stri = Left(stri,Len(stri)-1)
-		EndIf		
+		EndIf
 	EndIf
 	Draw String (x,y), promt & stri & "|", RGB(150,250,250)
 	Return stri
@@ -399,7 +399,7 @@ Sub DrawASCIIFrame(x1 As Integer, y1 As Integer, x2 As Integer, y2 As Integer, c
 	Dim As String sthorz = String((x2-x1-8)/8, Chr(205)) '196
 	Draw String (x1+8,y1  ), sthorz, col
 	Draw String (x1+8,y2  ), sthorz, col
-	For j As Integer = y1+8 To y2-8 Step 8 
+	For j As Integer = y1+8 To y2-8 Step 8
 		Draw String (x1,j), Chr(186), col '179
 		Draw String (x2,j), Chr(186), col '179
 	Next j
@@ -468,7 +468,7 @@ Sub TimeManager()
 	If timeGame.hasExpired Then
 		gametime+=1
 		timeGame.start
-	EndIf	
+	EndIf
 	If timeSyncTimer.hasExpired Then
 		''''' Send time update request
 		timeSyncTimer.start

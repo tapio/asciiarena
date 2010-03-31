@@ -13,9 +13,9 @@ WindowTitle "AsciiArena Server"
 	#Define exename "aa-server"
 #EndIf
 
-#Include Once "def.bi"
-#Include Once "util.bas"
-#Include Once "words.bi"
+#Include Once "miscfb/def.bi"
+#Include Once "miscfb/util.bas"
+#Include Once "miscfb/words.bi"
 #Include Once "chisock/chisock.bi"
 Using chi
 #Include Once "protocol.bi"
@@ -32,13 +32,13 @@ Sub accept_thread( Byval s As socket Ptr )
 	Var new_cli = New CLIENT_NODE
 	Do
 		new_cnx->listen_to_new( *s )
-		If ( s->is_closed Or serverShutdown ) Then 
-			Exit Do 
+		If ( s->is_closed Or serverShutdown ) Then
+			Exit Do
 		EndIf
-		If ( new_cnx->is_closed = FALSE ) Then 
+		If ( new_cnx->is_closed = FALSE ) Then
 			MutexLock(lock_players)
 			'If new_cnx->get( h ) Then
-				'If new_cnx->get( new_cli->name, 1, socket.BLOCK ) Then 
+				'If new_cnx->get( new_cli->name, 1, socket.BLOCK ) Then
 					new_cli->cnx = new_cnx
 					ServerOutput "New Connection: " & Str(*(new_cli->cnx->connection_info()))
 					clients += 1
@@ -118,7 +118,7 @@ Sub ServerThread( curCli As CLIENT_NODE Ptr )
 	Var moveTimer = DelayTimer(0.05)
 	Do Until curCli->cnx->is_closed() Or serverShutdown <> 0
 		'process incoming data
-		If( curCli->cnx->get( h ) ) Then 
+		If( curCli->cnx->get( h ) ) Then
 		If( curCli->cnx->get( msg , 1, socket.block ) ) Then
 		'ServerOutput Str(curCli->curGame)
 		If curCli->curGame <> 0 Then
@@ -151,7 +151,7 @@ Sub ServerThread( curCli As CLIENT_NODE Ptr )
 					curCli->curGame->sendToAll(Mid(msg,2))
 					ServerOutput("MSG>"&Mid(msg,2))
 			End Select
-			
+
 		' Starting stuff
 		Else
 			h = Asc(Left(msg,1))
@@ -174,7 +174,7 @@ Sub ServerThread( curCli As CLIENT_NODE Ptr )
 				h = Asc(Mid(msg,2,1))
 				If h > 0 AndAlso h <= numGames AndAlso games(numGames) <> 0 Then _
 					curCli->id = games(h)->addPlayer(curCli)
-				If curCli-> id <> 0 Then 
+				If curCli-> id <> 0 Then
 					ServerOutput "Assigned " & curCli->name & " to id " & Str(curCli->id) & " and game " & Str(curCli->curGame->id)
 					ServerOutput "Sending map"
 					For j = 1 To mapHeight
