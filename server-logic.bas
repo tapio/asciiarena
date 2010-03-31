@@ -169,7 +169,7 @@ End Type
 
 
 Dim Shared As Integer numGames = 0
-Dim Shared games(1 To numGames) As Game Ptr
+Dim Shared games(0 To numGames) As Game Ptr
 
 
 
