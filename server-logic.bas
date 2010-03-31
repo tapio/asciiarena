@@ -1,11 +1,11 @@
 '' Ascii Arena Server
-'' (c) Tapio Vierros 2009
+'' (c) Tapio Vierros 2009-2010
 '' License: Creative Commons Attribution 3.0
-'' 			http://creativecommons.org/licenses/by/3.0/
+''          http://creativecommons.org/licenses/by/3.0/
 
 
 
-Type GameFwd As Game 
+Type GameFwd As Game
 Type ClientFwd As CLIENT_NODE
 Type WeaponFwd As Weapon
 
@@ -53,7 +53,7 @@ End Type
 
 Dim Shared As CLIENT_NODE Ptr firstCli = 0, lastCli = 0
 Dim Shared As Integer clients = 0, regCount = 0
-Dim Shared As ULongInt runningID = 1 
+Dim Shared As ULongInt runningID = 1
 
 Dim Shared As Double StartTimer
 Dim Shared As String StartTime
@@ -145,7 +145,7 @@ End Type
 								curBlast->particles(k) = 1
 							Else
 								For i As Integer = 1 To this.plLimit
-									If this.players(i) <> 0 AndAlso this.players(i)->x = xx _ 
+									If this.players(i) <> 0 AndAlso this.players(i)->x = xx _
 										AndAlso this.players(i)->y = yy Then
 											Var temp = this.players(i)->takeDmg(ene * curBlast->dmgMult)
 											curBlast->particles(k) = 1
@@ -167,7 +167,7 @@ End Type
 			EndIf
 		Wend
 	End Sub
-	
+
 
 Dim Shared As Integer numGames = 0
 Dim Shared games(1 To numGames) As Game Ptr
@@ -207,10 +207,10 @@ Sub GameThread(curGame As Game Ptr)
 	Dim i As Integer
 	Dim pl As CLIENT_NODE Ptr
 	Do Until serverShutdown <> 0
-		
+
 		If statusTimer.hasExpired Then
 			For i As Integer = 1 to curGame->plLimit
-				pl = curGame->players(i)				
+				pl = curGame->players(i)
 				If pl <> 0 Then
 					pl->energy += pl->gun->recharge'/2.0
 					If pl->energy > pl->maxEne Then pl->energy = pl->maxEne
@@ -219,14 +219,14 @@ Sub GameThread(curGame As Game Ptr)
 			Next i
 			statusTimer.start
 		EndIf
-		
+
 		If blastTimer.hasExpired Then
 			curGame->updateLogic
 			blastTimer.start
 		Else
 			Sleep 4,1
 		EndIf
-		
+
 		Sleep 1,1
 	Loop
 End Sub

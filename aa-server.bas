@@ -1,7 +1,7 @@
 '' Ascii Arena Server
-'' (c) Tapio Vierros 2009
+'' (c) Tapio Vierros 2009-2010
 '' License: Creative Commons Attribution 3.0
-'' 			http://creativecommons.org/licenses/by/3.0/
+''          http://creativecommons.org/licenses/by/3.0/
 
 
 Const VERSION = "0.2.0"
