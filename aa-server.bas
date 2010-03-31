@@ -109,9 +109,9 @@ If serverShutdown = 2 Then Run exename
 End
 
 
-''					''
-''	ServerThread	''
-''					''
+''                    ''
+''    ServerThread    ''
+''                    ''
 Sub ServerThread( curCli As CLIENT_NODE Ptr )
 	Dim As Integer h = 0, i = 0, j = 0
 	Dim As String msg = "", tempst = ""
