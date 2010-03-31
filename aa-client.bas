@@ -11,7 +11,7 @@ Const VERSION = "0.2.0"
 #Include Once "miscfb/def.bi"
 #Include Once "miscfb/util.bas"
 #Include Once "miscfb/words.bi"
-#Include Once "miscfb/protocol.bi"
+#Include Once "protocol.bi"
 '#Include "fbgfx.bi"
 
 Const scrW = 800

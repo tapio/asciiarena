@@ -24,7 +24,7 @@
 
 
 Enum protocol
-	introduce	= 1
+	introduce = 1
 	join
 	message
 	gameInfo
@@ -36,7 +36,7 @@ Enum protocol
 End Enum
 
 Enum actions
-	north		= 1
+	north = 1
 	east
 	south
 	west
@@ -48,19 +48,19 @@ Enum queries
 	playerCount = &b00000010
 	areaInfo    = &b00000011
 	timeSync    = &b00000100
-	clientWait	= &b00000101
-	serverOp	= &b00000111
+	clientWait  = &b00000101
+	serverOp    = &b00000111
 End Enum
 
 Enum adminOps
-	shutdown	= &b000001
-	restart		= &b000010
-	reload		= &b000011
-	update		= &b000100
+	shutdown    = &b000001
+	restart     = &b000010
+	reload      = &b000011
+	update      = &b000100
 End Enum
 
 Enum cflags
-	admin		= &b10000000
+	admin       = &b10000000
 End Enum
 
 Enum tile_flags
@@ -89,19 +89,19 @@ Const timestep = 0.05
 Const numBlastParticles = 16
 Const blastAngle = 360.0/numBlastParticles
 Type BlastWave
-	x			As UByte
-	y			As UByte
-	energy		As Single = 10
-	energyUsage	As Single = 1.0
-	speed		As Single = 5.0
-	dmgMult		As Single = 1.0
-	startTime	As Double
+	x           As UByte
+	y           As UByte
+	energy      As Single = 10
+	energyUsage As Single = 1.0
+	speed       As Single = 5.0
+	dmgMult     As Single = 1.0
+	startTime   As Double
 	particles(1 To numBlastParticles) As UByte
-	nextNode	As BlastWave Ptr
+	nextNode    As BlastWave Ptr
 	'color As UInteger
 	Declare Constructor(x As UByte = 0, y As UByte = 0)
 End Type
 	Constructor BlastWave(x As UByte = 0, y As UByte = 0)
-		this.x   = x
-		this.y   = y
+		this.x = x
+		this.y = y
 	End Constructor

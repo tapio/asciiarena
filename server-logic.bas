@@ -10,7 +10,6 @@ Type ClientFwd As CLIENT_NODE
 Type WeaponFwd As Weapon
 
 
-
 Type CLIENT_NODE
 	name As String = ""
 	id   As UByte
@@ -175,12 +174,12 @@ Dim Shared games(1 To numGames) As Game Ptr
 
 
 Type Weapon
-	energy		As Single = 10
-	maxEnergy	As Single = 50
-	energyUsage	As Single = 5.0
-	dmgMult		As Single = 1.0
-	speed		As Single = 6.0
-	recharge	As Single = 5.0
+	energy      As Single = 10
+	maxEnergy   As Single = 50
+	energyUsage As Single = 5.0
+	dmgMult     As Single = 1.0
+	speed       As Single = 6.0
+	recharge    As Single = 5.0
 	'color As UInteger
 	'Declare Constructor ()
 	Declare Sub Shoot(shooter As ClientFwd Ptr)
